@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#050505"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Ability Games">
-<link rel="apple-touch-icon" id="ati" href="data:,"><link rel="manifest" id="mf">
+<link rel="icon" id="fav" href="data:,"><link rel="apple-touch-icon" id="ati" href="data:,"><script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script><link rel="manifest" id="mf">
 <title>Ability Games</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -51,6 +51,14 @@ select:focus,input:focus{outline:none;border-color:var(--ac)}
 .card{display:flex;align-items:center;justify-content:center;padding:0;line-height:1}
 body{touch-action:manipulation;-webkit-tap-highlight-color:transparent}canvas{user-select:none;-webkit-user-select:none}
 svg#sv{display:none;width:100%;height:auto;max-height:76vh;margin:0 auto;border-radius:12px;border:2px solid var(--ln);background:#070707;box-shadow:0 0 18px rgba(255,40,28,.4);touch-action:none;user-select:none;-webkit-user-select:none}
+.top{padding:10px 18px;border-bottom:2px solid var(--ln);background:var(--bg);position:sticky;top:0;z-index:5}
+.brand{display:flex;align-items:center;gap:12px;background:none;border:0;color:var(--fg);font:700 20px Sora,system-ui,sans-serif;cursor:pointer;padding:0;max-width:980px;margin:0 auto;width:100%}
+.brand svg{width:38px;height:38px;display:block}.brand b{color:var(--ac);text-shadow:0 0 14px rgba(255,40,28,.7)}
+.top>.brand{display:flex}
+input:not([type=file]):not([type=number]){background:var(--bg);color:var(--fg);border:2px solid var(--ln);border-radius:8px;padding:10px 12px;font:inherit;letter-spacing:.12em;text-transform:uppercase}
+input::placeholder{color:var(--mu);letter-spacing:0;text-transform:none}
+select{appearance:none;-webkit-appearance:none;padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23e8140c' stroke-width='2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+label{font-weight:500;letter-spacing:.02em}
 </style></head><body><main>
 
 <section id="menu" class="scr">
@@ -62,8 +70,17 @@ svg#sv{display:none;width:100%;height:auto;max-height:76vh;margin:0 auto;border-
 <button class="tile" onclick="startSnake()"><span class="tg"></span><b>Snake</b><small>Eat, grow, don’t crash. Swipe on mobile. Best: <span id="b1">0</span></small></button>
 <button class="tile" onclick="startAim()"><span class="tg"></span><b>Aim Trainer</b><small>Hit shrinking targets for 30 seconds. Best: <span id="b2">0</span></small></button>
 <button class="tile" onclick="startStack()"><span class="tg"></span><b>Stack</b><small>Tap to drop blocks and build a tall tower. Best: <span id="b3">0</span></small></button>
+<button class="tile" onclick="show('lobby')"><span class="tg"></span><b>Play online</b><small>Challenge a friend over the internet with a room code, in any game.</small></button>
 </div>
 <div id="inst" hidden style="margin-top:22px"><button class="b alt" onclick="inst()">Add to home screen</button><p id="it" class="sub" style="margin:10px 0 0"></p></div></section>
+
+<section id="lobby" class="scr" hidden>
+<div class="bar"><button class="b alt" onclick="show('menu')">← Menu</button><h2 style="margin:0">Play online</h2></div>
+<div class="panel"><p class="sub" style="margin:0">One of you creates a room and shares the code, the other joins with it. You both play the same game at the same time and the higher score wins. Memory Match is turn based.</p>
+<div class="row"><button class="b" onclick="netHost()">Create room</button><input id="rc" maxlength="6" placeholder="Room code" aria-label="Room code"><button class="b alt" onclick="netJoin($('#rc').value)">Join room</button></div>
+<p id="lt" class="sub" style="margin:0"></p>
+<div id="pick" hidden><p class="sub" style="margin:0 0 10px">Pick the game. Wave Dash uses the settings from the Wave menu.</p><div class="row">
+<button class="b alt" onclick="netPick('wave')">Wave Dash</button><button class="b alt" onclick="netPick('breaker')">Brick Breaker</button><button class="b alt" onclick="netPick('snake')">Snake</button><button class="b alt" onclick="netPick('aim')">Aim Trainer</button><button class="b alt" onclick="netPick('stack')">Stack</button><button class="b alt" onclick="netPick('mem')">Memory Match</button></div></div></div></section>
 
 <section id="wmenu" class="scr" hidden>
 <div class="bar"><button class="b alt" onclick="show('menu')">← Menu</button><h2 style="margin:0">Wave Dash</h2></div>
@@ -83,10 +100,7 @@ svg#sv{display:none;width:100%;height:auto;max-height:76vh;margin:0 auto;border-
 <label>Randomness<select id="rnd"><option value="0">Off</option><option value="0.25" selected>Mixed</option><option value="0.5">Wild</option></select></label>
 <label>Gravity portals<select id="por"><option value="0">Off</option><option value="1">Few</option><option value="2">Many</option></select></label></div>
 <p class="sub" style="margin:0">The BPM is measured in your browser from the audio, and the layout turns on the beat. Slow songs make a slow level, fast songs make a fast one. Hold click, tap or Space to go up; release to go down.</p>
-<button class="b" onclick="playWave()">Play</button>
-<div style="border-top:2px solid var(--ln);padding-top:14px;display:grid;gap:12px"><b>Two players</b><p class="sub" style="margin:0">Race the same level against a friend with a room code. The host’s settings are used. Both players need to be signed in to Claude, and a custom song needs the same file on both devices.</p>
-<div class="row"><button class="b alt" onclick="mpOpen(1,Math.random().toString(36).slice(2,6))">Create room</button><label>Room code<input id="rc" maxlength="8" placeholder="Enter a code"></label><button class="b alt" onclick="mpOpen(0,$('#rc').value.trim().toLowerCase())">Join room</button></div>
-<p id="mpt" class="sub" style="margin:0"></p><button id="mps" class="b" hidden onclick="mpGo()">Start race</button></div></div></section>
+<button class="b" onclick="playWave()">Play</button></div></section>
 
 <section id="game" class="scr" hidden>
 <div class="bar"><button class="b alt" onclick="show('menu')">← Menu</button><span class="sp"></span><span id="hud1"></span></div>
@@ -103,7 +117,7 @@ let actx,src,loop=0,mode='normal',W,S;const K={};
 const sv=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},ld=(k,d)=>{try{return localStorage.getItem(k)||d}catch(e){return d}};
 function refresh(){$('#bs').textContent=ld('arc_s',0);$('#bm').textContent=ld('arc_m','–');$('#b1').textContent=ld('arc_sn',0);$('#b2').textContent=ld('arc_ai',0);$('#b3').textContent=ld('arc_st',0)}refresh();
 function stopSong(){try{src&&src.stop()}catch(e){}src=null}
-function show(id){cancelAnimationFrame(loop);cv.style.cursor='';SVG=null;svg.style.display='none';cv.style.display='block';stopSong();document.querySelectorAll('.scr').forEach(e=>e.hidden=e.id!==id);$('#hud1').textContent='';$('#hud2').textContent='';if(id==='menu')refresh()}
+function show(id){cancelAnimationFrame(loop);scrollTo(0,0);if(id==='menu'||id==='wmenu'||id==='lobby'){RN=Math.random;if(NET)NET.vs=0}cv.style.cursor='';SVG=null;svg.style.display='none';cv.style.display='block';stopSong();document.querySelectorAll('.scr').forEach(e=>e.hidden=e.id!==id);$('#hud1').textContent='';$('#hud2').textContent='';if(id==='menu')refresh()}
 function ov(h,p,btns){const o=$('#ov');if(!h){o.hidden=true;return}o.hidden=false;o.innerHTML=`<h2>${h}</h2><p>${p||''}</p>`;if(btns){const d=document.createElement('div');d.style.cssText='display:flex;gap:10px';btns.forEach(([t,f],i)=>{const b=document.createElement('button');b.className='b'+(i?' alt':'');b.textContent=t;b.onclick=f;d.append(b)});o.append(d)}}
 document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll('#modes button').forEach(x=>x.setAttribute('aria-pressed',x===b))});
 $('#file').onchange=()=>{if($('#file').files[0])$('#song').value='file'};
@@ -172,7 +186,7 @@ function build(a,vx,slope,gap,dur,ext,rn){
  adv(dur+1.5);return pts}
 async function playWave(st){
  const C=st||{m:mode,s:$('#song').value,b:parseFloat($('#bpm').value)||0,d:+$('#diff').value,sp:+$('#spd').value,r:+$('#rnd').value,p:+$('#por').value,sd:0};
- show('game');cv.width=960;cv.height=H;W=null;S=null;cv.style.cursor='';ov('Analyzing song…','Measuring the BPM and building your layout');
+ show('game');cv.width=960;cv.height=H;W=null;S=null;cv.style.cursor='';$('#hud2').textContent=innerHeight>innerWidth?'Tip: turn your phone sideways for a bigger view.':'';ov('Analyzing song…','Measuring the BPM and building your layout');
  try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();await actx.resume();RN=C.sd?mul(C.sd):Math.random;if($('#clk').value==='1')await loadSnd();
   const sel=C.s;let buf;
   if(sel==='file'){const f=$('#file').files[0];if(!f){ov('No file chosen','Pick an audio file in the wave menu first.',[['Back',()=>show('wmenu')]]);return}
@@ -183,43 +197,62 @@ async function playWave(st){
   const vx=Math.min(780,Math.max(300,250+(bpm-60)*3.6))*C.sp*(C.d<=.4?1.15:1);
   const slope=mini?2:1.15,sz=mini?5:8,gap=2*(sz+vx*slope*(mini?.085:.15)*C.d);
   W={buf,bpm,tier,vx,k:slope*vx,gap,slope,mini,size:mini?5:8,clk:$('#clk').value==='1',pts:build(a,vx,slope,gap,buf.duration,C.d<=.4,C.r),off:a.off,att:0,on:false};W.por=mkPortals(W.pts,a.beats,buf.duration,C.p);
-  if(st)W.mp={room:MPR.r,ls:0,p:null};
+  if(st){W.vs=1;W.ls=0}
   startWave();
  }catch(err){ov('Could not read that audio','Try an MP3, WAV, M4A or OGG file.',[['Back',()=>show('wmenu')]])}
 }
 function startWave(){
- if(W.mp){W.mp.p=null;W.mp.room.presence({p:0,d:0,a:1,t:0,y:270})}
  W.att++;W.idx=0;W.grav=1;W.pi=0;W.py=H/2;W.hold=false;W.trail=[];W.dead=false;W.on=true;
  const info=`${W.bpm.toFixed(2)} BPM · ${W.tier} level · ${W.mini?'Mini':'Normal'} wave`;
  ov(info,'Get ready…');setTimeout(()=>{if(W.on&&!W.dead)ov()},900);
  stopSong();src=actx.createBufferSource();src.buffer=W.buf;src.connect(actx.destination);W.t0=actx.currentTime+1.2;src.start(W.t0);W.last=actx.currentTime;
  $('#hud1').textContent=info;cancelAnimationFrame(loop);loop=requestAnimationFrame(wframe)}
-let MPR=null;
-async function mpOpen(host,code){const t=$('#mpt');
- if(!code){t.textContent='Enter a room code first.';return}
- const room=window.claude?await claude.use('room'):null;
- if(!room){t.textContent='Rooms are not available here. Open this page while signed in to Claude.';return}
- try{if(MPR)MPR.r.leave();const r=await room.join('wave-'+code.replace(/[^a-z0-9]/g,''));MPR={r,host,code,lg:0};
-  r.presence({h:host?1:0,a:0,d:1});
-  r.onPeers(()=>{mpUi();const hp=r.peers().find(x=>!x.isMe&&x.presence.h&&x.presence.go);if(!host&&hp&&hp.presence.go>MPR.lg){MPR.lg=hp.presence.go;playWave(hp.presence.st)}if(W&&W.mp&&W.mp.p!=null)mpRes()});mpUi()}
- catch(e){t.textContent='Could not join that room.'}}
-function mpUi(){const t=$('#mpt'),b=$('#mps');if(!MPR){t.textContent='';b.hidden=true;return}const n=MPR.r.peers().length,c=MPR.code.toUpperCase();
- t.textContent=MPR.host?`Room code: ${c}. ${n<2?'Waiting for player 2…':'Player 2 is here.'}`:`Joined room ${c}. ${n<2?'Looking for the host…':'Waiting for the host to start.'}`;b.hidden=!(MPR.host&&n>=2)}
-function mpGo(){const st={m:mode,s:$('#song').value,b:parseFloat($('#bpm').value)||0,d:+$('#diff').value,sp:+$('#spd').value,r:+$('#rnd').value,p:+$('#por').value,sd:(Math.random()*1e9|0)+1},go=Date.now();MPR.lg=go;MPR.r.presence({st,go});playWave(st)}
-function mpLeave(){if(MPR)MPR.r.leave();MPR=null;show('wmenu');mpUi()}
-function mpEnd(t,fin){W.on=false;W.dead=!fin;stopSong();draw(t);const p=fin?W.buf.duration:Math.max(0,t);W.mp.p=p;W.mp.room.presence({p:+p.toFixed(2),d:1,a:0,t:+t.toFixed(2)});mpRes()}
-function mpRes(){const m=W.mp,o=m.room.peers().find(x=>!x.isMe),pc=v=>Math.round(v/W.buf.duration*100)+'%';
- if(o&&!o.presence.d){ov('Waiting for your opponent…','You reached '+pc(m.p),[['Leave room',mpLeave]]);return}
- const op=o?o.presence.p||0:0,r=m.p>op+.02?'You win':m.p<op-.02?'You lose':'Draw';
- ov(r,`You: ${pc(m.p)}${o?' · Opponent: '+pc(op):' · Opponent left'}`,[['Back to room',()=>show('wmenu')],['Leave room',mpLeave]])}
+function fit(){if($('#game').hidden)return;const el=SVG?svg:cv,cw=SVG?SVG.w:cv.width,ch=SVG?SVG.h:cv.height,st=$('.stage'),top=st.getBoundingClientRect().top+scrollY,aw=st.parentElement.clientWidth,ah=innerHeight-top-64,k=Math.max(.2,Math.min(aw/cw,ah/ch,2));el.style.maxHeight='none';el.style.width=cw*k+'px';el.style.height=ch*k+'px';st.style.width=cw*k+'px'}
+setInterval(fit,200);addEventListener('resize',fit);
+let NET=null,PR=null;
+const NOSRV='Could not reach the matchmaking server. Check your internet connection or try another network.',PCFG={config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'turn:openrelay.metered.ca:80',username:'openrelayproject',credential:'openrelayproject'},{urls:'turn:openrelay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'}]}};
+const lobby=t=>{$('#lt').textContent=t};
+const opp=(x=480,y=58)=>NET&&NET.vs?tx(x,y,'Opponent '+NET.ov,'middle'):'';
+function send(m){try{NET&&NET.c&&NET.c.open&&NET.c.send(m)}catch(e){}}
+function netClose(){try{NET&&NET.c.close()}catch(e){}try{PR&&PR.destroy()}catch(e){}NET=null;PR=null;$('#pick').hidden=true}
+function netHost(){if(typeof Peer==='undefined'){lobby('Online play could not load. Check your connection.');return}
+ netClose();lobby('Creating room…');const code=Math.random().toString(36).slice(2,6),p=PR=new Peer('abilitygames-'+code,PCFG);setTimeout(()=>{if(PR===p&&!p.open)lobby(NOSRV)},8000);
+ p.on('open',()=>lobby(`Room code: ${code.toUpperCase()}. Waiting for your friend to join…`));
+ p.on('connection',c=>{if(NET)return c.close();attach(c,1)});
+ p.on('error',e=>lobby(e.type==='unavailable-id'?'That code was taken, press Create room again.':NOSRV))}
+function netJoin(code){code=(code||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');if(!code){lobby('Enter a room code first.');return}
+ if(typeof Peer==='undefined'){lobby('Online play could not load. Check your connection.');return}
+ netClose();lobby('Connecting…');const p=PR=new Peer(undefined,PCFG);setTimeout(()=>{if(PR===p&&!p.open)lobby(NOSRV)},8000);
+ p.on('open',()=>{lobby('Connecting…');attach(p.connect('abilitygames-'+code,{reliable:true}),0);setTimeout(()=>{if(NET&&!NET.up)lobby('Could not reach that room. Check the code.')},9000)});
+ p.on('error',e=>lobby(e.type==='peer-unavailable'?'No room with that code.':NOSRV))}
+function attach(c,host){NET={c,host,me:host?0:1,vs:0,ov:0,up:0};
+ const up=()=>{NET.up=1;lobby(host?'Friend connected. Pick a game.':'Connected. Waiting for the host to pick a game.');$('#pick').hidden=!host};
+ c.open?up():c.on('open',up);c.on('data',onNet);
+ c.on('close',()=>{if(!NET||NET.c!==c)return;NET=null;lobby('Your friend left the room.');$('#pick').hidden=true;cancelAnimationFrame(loop);stopSong();if(!$('#game').hidden)ov('Your friend left','The room has closed.',[['Back',()=>show('lobby')]]);else if(!$('#mem').hidden)show('lobby')})}
+const GM=['wave','breaker','snake','aim','stack','mem'];
+function netPick(g){if(!NET||!NET.up)return;const sd=(Math.random()*1e9|0)+1,st=g==='wave'?{m:mode,s:$('#song').value,b:parseFloat($('#bpm').value)||0,d:+$('#diff').value,sp:+$('#spd').value,r:+$('#rnd').value,p:+$('#por').value,sd}:null;send({t:'start',g,sd,st});vsStart(g,sd,st)}
+function vsStart(g,sd,st){if(!NET||!GM.includes(g))return;NET.vs=1;NET.ov=0;NET.o=null;NET.myv=null;NET.ofin=null;RN=mul(sd|0);
+ ({wave:()=>playWave(st),breaker:startBreaker,snake:startSnake,aim:startAim,stack:startStack,mem:startMem})[g]()}
+function onNet(m){if(!NET||!m)return;
+ if(m.t==='start')vsStart(m.g,m.sd,m.st);
+ else if(m.t==='s')NET.ov=+m.v||0;
+ else if(m.t==='w')NET.o={t:+m.tt||0,y:+m.y||0,a:m.a===0?0:1,at:performance.now()};
+ else if(m.t==='e'){NET.ofin=+m.v||0;if(NET.myv!=null)vsRes()}
+ else if(m.t==='f'&&NET.vs&&typeof M!=='undefined'&&M)flip(m.i|0,$('#mg').children[m.i|0],1)}
+function vsEnd(v,title,fmt){NET.myv=v;NET.title=title;NET.fmt=fmt||(x=>x);send({t:'e',v});vsRes()}
+function vsRes(){if(!NET||!NET.vs)return;const fm=NET.fmt;
+ if(NET.ofin==null){ov('Waiting for your opponent…',`${NET.title}: ${fm(NET.myv)}`,[['Leave room',()=>{netClose();show('lobby')}]]);return}
+ const m=NET.myv,o=NET.ofin;ov(m>o?'You win':m<o?'You lose':'Draw',`You ${fm(m)} · Opponent ${fm(o)}`,[['Back to lobby',()=>show('lobby')],['Leave room',()=>{netClose();show('lobby')}]])}
+function wEnd(t,fin){W.on=false;W.dead=!fin;stopSong();draw(t);const p=fin?W.buf.duration:Math.max(0,t);send({t:'w',tt:p,y:0,a:0});vsEnd(p,fin?'Level complete':'Crashed',v=>Math.round(v/W.buf.duration*100)+'%')}
+setInterval(()=>{if(NET&&NET.vs&&NET.myv==null&&!$('#game').hidden&&S&&!W)send({t:'s',v:S.sc!=null?S.sc:S.hits})},250);
 function cAt(t){const p=W.pts;let i=W.idx;while(i<p.length-2&&p[i+1].t<t)i++;W.idx=i;const a=p[i],b=p[i+1];return a.y+(b.y-a.y)*Math.min(1,Math.max(0,(t-a.t)/((b.t-a.t)||1)))}
 function wframe(){
- const now=actx.currentTime,t=now-W.t0,dt=Math.min(.05,now-W.last);W.last=now;if(W.mp&&now-W.mp.ls>.07){W.mp.ls=now;W.mp.room.presence({t:+t.toFixed(2),y:Math.round(W.py)})}
+ const now=actx.currentTime,t=now-W.t0,dt=Math.min(.05,now-W.last);W.last=now;if(W.vs&&now-W.ls>.07){W.ls=now;send({t:'w',tt:+t.toFixed(2),y:Math.round(W.py)})}
  while(W.pi<W.por.length&&W.por[W.pi].t<=t){W.grav=W.por[W.pi].to;W.pi++}if(t>=2){W.py+=(W.hold?-1:1)*W.grav*W.k*dt;if(Math.abs(W.py-cAt(t))+W.size>W.gap/2||W.py<0||W.py>H){return die(t)}}
- if(t>W.buf.duration){if(W.mp)return mpEnd(t,1);W.on=false;stopSong();draw(t);ov('Level complete!',`${W.bpm.toFixed(1)} BPM ${W.tier.toLowerCase()} level cleared in ${W.att} attempt${W.att>1?'s':''}.`,[['Play again',startWave],['Wave menu',()=>show('wmenu')]]);return}
+ if(t>W.buf.duration){if(W.vs)return wEnd(t,1);W.on=false;stopSong();draw(t);ov('Level complete!',`${W.bpm.toFixed(1)} BPM ${W.tier.toLowerCase()} level cleared in ${W.att} attempt${W.att>1?'s':''}.`,[['Play again',startWave],['Wave menu',()=>show('wmenu')]]);return}
  W.trail.push({t,y:W.py});while(W.trail.length&&W.trail[0].t<t-.5)W.trail.shift();
  draw(t);loop=requestAnimationFrame(wframe)}
-function die(t){if(W.mp)return mpEnd(t,0);W.dead=true;W.on=false;stopSong();draw(t);const pct=Math.max(0,Math.min(100,Math.round(t/W.buf.duration*100)));
+function die(t){if(W.vs)return wEnd(t,0);W.dead=true;W.on=false;stopSong();draw(t);const pct=Math.max(0,Math.min(100,Math.round(t/W.buf.duration*100)));
  ov('Crashed at '+pct+'%','Attempt '+W.att,[['Retry',startWave],['Wave menu',()=>show('wmenu')]])}
 function draw(t){
  const P=60/W.bpm,ph=((t-W.off)/P%1+1)%1,X=200,vx=W.vx,gp=W.gap/2;
@@ -231,7 +264,7 @@ function draw(t){
  g.lineWidth=3;g.strokeStyle='#ff2a1f';g.lineJoin='round';path(-1);g.stroke();path(1);g.stroke();
  for(const p of W.por){const x=X+(p.t-t)*vx;if(x<-30||x>990)continue;g.strokeStyle=p.to<0?'#fff':'#ff2a1f';g.fillStyle=p.to<0?'rgba(255,255,255,.12)':'rgba(255,42,31,.15)';g.lineWidth=4;g.beginPath();g.ellipse(x,p.y,12,gp+34,0,0,7);g.fill();g.stroke()}
  if(W.por.length){g.fillStyle='#fff';g.font='700 16px Sora,sans-serif';g.textAlign='right';g.fillText(W.grav<0?'Gravity: inverted':'Gravity: normal',944,30);g.textAlign='left'}
- if(W.mp){const o=W.mp.room.peers().find(x=>!x.isMe);if(o&&o.presence.a){const gx=X+(o.presence.t+(performance.now()-o.updatedAt)/1e3-t)*vx;g.fillStyle='rgba(255,255,255,.35)';g.beginPath();g.arc(gx,o.presence.y,W.size*1.6,0,7);g.fill()}}
+ if(W.vs&&NET&&NET.o&&NET.o.a){const o=NET.o,gx=X+(o.t+(performance.now()-o.at)/1e3-t)*vx;g.fillStyle='rgba(255,255,255,.35)';g.beginPath();g.arc(gx,o.y,W.size*1.6,0,7);g.fill()}
  g.strokeStyle='rgba(255,255,255,.6)';g.lineWidth=W.size*.9;g.beginPath();W.trail.forEach((p,i)=>{const x=X-(t-p.t)*vx;i?g.lineTo(x,p.y):g.moveTo(x,p.y)});g.lineTo(X,W.py);g.stroke();
  const ang=Math.atan2((W.hold?-1:1)*W.grav*W.k,vx),s=W.size*1.6;g.save();g.translate(X,W.py);g.rotate(W.dead?0:ang);g.fillStyle=W.dead?'#f55':'#fff';g.beginPath();g.moveTo(s,0);g.lineTo(-s,-s*.8);g.lineTo(-s,s*.8);g.fill();g.restore();g.shadowBlur=0;
  g.fillStyle='rgba(255,255,255,.18)';g.fillRect(0,H-6,960,6);g.fillStyle='#ff2a1f';g.fillRect(0,H-6,960*Math.max(0,Math.min(1,t/W.buf.duration)),6);
@@ -243,7 +276,7 @@ function mk(){S.br=[];const rows=4+Math.min(S.lv,4);for(let r=0;r<rows;r++)for(l
 function startBreaker(){show('game');W=null;useSvg(960,540);
  S={sc:0,hp:3,lv:1,mx:480,my:0,px:480,pw:120,bx:480,by:496,vx:0,vy:0,on:false,br:[],last:performance.now(),over:false};
  mk();ov();$('#hud2').textContent='Move the mouse or finger, or use the arrow keys. Click, tap or press Space to launch.';loop=requestAnimationFrame(brk)}
-function gun(){if(S.on)return;const sp=380+S.lv*35,a=(Math.random()*.8-.4);S.vx=sp*Math.sin(a);S.vy=-sp*Math.cos(a);S.on=true}
+function gun(){if(S.on)return;const sp=380+S.lv*35,a=(RN()*.8-.4);S.vx=sp*Math.sin(a);S.vy=-sp*Math.cos(a);S.on=true}
 function brk(now){
  const dt=Math.min(.03,(now-S.last)/1e3);S.last=now;
  if(K.arrowleft||K.a)S.mx-=640*dt;if(K.arrowright||K.d)S.mx+=640*dt;if(K[' ']&&!S.on)gun();
@@ -256,13 +289,13 @@ function brk(now){
   S.br=S.br.filter(b=>!b.dead);
   if(!S.br.length){S.lv++;S.on=false;mk()}
   if(S.by>560){S.hp--;S.on=false}}
- svg.innerHTML=rc(0,0,960,540,'#070707')+S.br.map(b=>rc(b.x,b.y,b.w,b.h,`hsl(4,85%,${60-b.r*6}%)`,4)).join('')+rc(S.px-S.pw/2,510,S.pw,12,'#fff',6)+ci(S.bx,S.by,7,'#fff')+tx(16,32,'Score '+S.sc)+tx(480,32,'Level '+S.lv,'middle')+tx(944,32,'Lives '+Math.max(0,S.hp),'end');
- if(S.hp<=0){S.over=true;const best=Math.max(S.sc,+ld('arc_s',0));sv('arc_s',best);ov('Game over',`Score ${S.sc} · Best ${best}`,[['Play again',startBreaker],['Menu',()=>show('menu')]]);return}
+ svg.innerHTML=rc(0,0,960,540,'#070707')+S.br.map(b=>rc(b.x,b.y,b.w,b.h,`hsl(4,85%,${60-b.r*6}%)`,4)).join('')+rc(S.px-S.pw/2,510,S.pw,12,'#fff',6)+ci(S.bx,S.by,7,'#fff')+tx(16,32,'Score '+S.sc)+tx(480,32,'Level '+S.lv,'middle')+tx(944,32,'Lives '+Math.max(0,S.hp),'end')+opp();
+ if(S.hp<=0){S.over=true;if(NET&&NET.vs)return vsEnd(S.sc,'Out of lives');const best=Math.max(S.sc,+ld('arc_s',0));sv('arc_s',best);ov('Game over',`Score ${S.sc} · Best ${best}`,[['Play again',startBreaker],['Menu',()=>show('menu')]]);return}
  loop=requestAnimationFrame(brk)}
 
 /* ---------- Snake, Aim Trainer, Stack (SVG) ---------- */
 addEventListener('pointerup',e=>{if(S&&S.swipe&&!S.over){const[x,y]=rel(e),dx=x-S.sx,dy=y-S.sy;if(Math.max(Math.abs(dx),Math.abs(dy))>30)S.swipe(dx,dy)}});
-function fin(k,sc,again,t){const b=Math.max(sc,+ld(k,0));sv(k,b);ov(t||'Game over',`Score ${sc} · Best ${b}`,[['Play again',again],['Menu',()=>show('menu')]])}
+function fin(k,sc,again,t){if(NET&&NET.vs)return vsEnd(sc,t);const b=Math.max(sc,+ld(k,0));sv(k,b);ov(t||'Game over',`Score ${sc} · Best ${b}`,[['Play again',again],['Menu',()=>show('menu')]])}
 function turn(n){if(n[0]!==-S.d[0]||n[1]!==-S.d[1])S.nd=n}
 const CK='<defs><pattern id="ck" width="48" height="48" patternUnits="userSpaceOnUse"><rect x="24" width="24" height="24" fill="#161010"/><rect y="24" width="24" height="24" fill="#161010"/></pattern></defs>';
 function startSnake(){show('game');W=null;useSvg(480,480);
@@ -272,16 +305,16 @@ function snk(now){const dt=Math.min(.05,(now-S.last)/1e3);S.last=now;
  if(K.arrowleft||K.a)turn([-1,0]);if(K.arrowright||K.d)turn([1,0]);if(K.arrowup||K.w)turn([0,-1]);if(K.arrowdown||K.s)turn([0,1]);
  S.t+=dt;if(S.t>=Math.max(.06,.14-S.sc*.0015)){S.t=0;S.d=S.nd;const h=[S.sn[0][0]+S.d[0],S.sn[0][1]+S.d[1]];
   if(h[0]<0||h[1]<0||h[0]>19||h[1]>19||S.sn.some(p=>p[0]===h[0]&&p[1]===h[1])){S.over=true;fin('arc_sn',S.sc,startSnake,'Crashed');return}
-  S.sn.unshift(h);if(h[0]===S.f[0]&&h[1]===S.f[1]){S.sc+=10;do{S.f=[Math.random()*20|0,Math.random()*20|0]}while(S.sn.some(p=>p[0]===S.f[0]&&p[1]===S.f[1]))}else S.sn.pop()}
- svg.innerHTML=CK+rc(0,0,480,480,'#070707')+rc(0,0,480,480,'url(#ck)')+ci(S.f[0]*24+12,S.f[1]*24+12,8,'#fff')+ci(S.f[0]*24+12,S.f[1]*24+12,4,'#e8140c')+S.sn.map((p,i)=>rc(p[0]*24+1,p[1]*24+1,22,22,i?'#e8140c':'#fff',6)).join('')+tx(10,26,'Score '+S.sc);
+  S.sn.unshift(h);if(h[0]===S.f[0]&&h[1]===S.f[1]){S.sc+=10;do{S.f=[RN()*20|0,RN()*20|0]}while(S.sn.some(p=>p[0]===S.f[0]&&p[1]===S.f[1]))}else S.sn.pop()}
+ svg.innerHTML=CK+rc(0,0,480,480,'#070707')+rc(0,0,480,480,'url(#ck)')+ci(S.f[0]*24+12,S.f[1]*24+12,8,'#fff')+ci(S.f[0]*24+12,S.f[1]*24+12,4,'#e8140c')+S.sn.map((p,i)=>rc(p[0]*24+1,p[1]*24+1,22,22,i?'#e8140c':'#fff',6)).join('')+tx(10,26,'Score '+S.sc)+opp(240,52);
  loop=requestAnimationFrame(snk)}
-function nt(){const r=34+Math.random()*16;S.tg={x:r+Math.random()*(640-2*r),y:60+r+Math.random()*(360-2*r),r,t:0,life:Math.max(.55,1.3-S.hits*.02)}}
+function nt(){const r=34+RN()*16;S.tg={x:r+RN()*(640-2*r),y:60+r+RN()*(360-2*r),r,t:0,life:Math.max(.55,1.3-S.hits*.02)}}
 function startAim(){show('game');W=null;useSvg(640,480);
  S={hits:0,miss:0,tl:30,tg:null,last:performance.now(),over:false,mx:0,my:0,tap(x,y){const t=S.tg;if(Math.hypot(x-t.x,y-t.y)<=t.r*(1-t.t/t.life*.6)+6){S.hits++;nt()}else S.miss++}};
  nt();ov();$('#hud2').textContent='Tap or click each target before it shrinks away.';loop=requestAnimationFrame(aim)}
 function aim(now){const dt=Math.min(.05,(now-S.last)/1e3);S.last=now;S.tl-=dt;const q=S.tg;q.t+=dt;if(q.t>q.life){S.miss++;nt()}
  const t=S.tg,r=t.r*(1-t.t/t.life*.6);
- svg.innerHTML=rc(0,0,640,480,'#070707')+[[1,'#e8140c'],[.66,'#fff'],[.33,'#e8140c']].map(([m,c])=>ci(t.x,t.y,r*m,c)).join('')+tx(14,32,'Time '+Math.max(0,Math.ceil(S.tl)))+tx(626,32,'Hits '+S.hits,'end');
+ svg.innerHTML=rc(0,0,640,480,'#070707')+[[1,'#e8140c'],[.66,'#fff'],[.33,'#e8140c']].map(([m,c])=>ci(t.x,t.y,r*m,c)).join('')+tx(14,32,'Time '+Math.max(0,Math.ceil(S.tl)))+tx(626,32,'Hits '+S.hits,'end')+opp(320,60);
  if(S.tl<=0){S.over=true;const n=S.hits+S.miss;fin('arc_ai',S.hits,startAim,`Time up · ${n?Math.round(S.hits/n*100):0}% accuracy`);return}
  loop=requestAnimationFrame(aim)}
 function stk(){if(S.over)return;const p=S.bl[S.bl.length-1],c=S.cur,o=Math.min(c.x+c.w,p.x+p.w)-Math.max(c.x,p.x);
@@ -294,27 +327,32 @@ function startStack(){show('game');W=null;useSvg(420,640);
 function stkL(now){const dt=Math.min(.05,(now-S.last)/1e3);S.last=now;if(K[' ']&&!S.ks){S.ks=1;stk()}if(!K[' '])S.ks=0;if(S.over)return;
  const c=S.cur,n=S.bl.length;c.x+=c.d*(170+n*7)*dt;if(c.x<0){c.x=0;c.d=1}if(c.x>420-c.w){c.x=420-c.w;c.d=-1}
  S.cam+=(Math.max(0,(n-12)*28)-S.cam)*Math.min(1,dt*6);
- svg.innerHTML=rc(0,0,420,640,'#070707')+S.bl.map((b,i)=>rc(b.x,612-i*28+S.cam,b.w,27,`hsl(4,80%,${Math.max(26,58-i*1.2)}%)`,3)).join('')+rc(c.x,612-n*28+S.cam,c.w,27,'#fff',3)+tx(14,30,'Score '+S.sc);
+ svg.innerHTML=rc(0,0,420,640,'#070707')+S.bl.map((b,i)=>rc(b.x,612-i*28+S.cam,b.w,27,`hsl(4,80%,${Math.max(26,58-i*1.2)}%)`,3)).join('')+rc(c.x,612-n*28+S.cam,c.w,27,'#fff',3)+tx(14,30,'Score '+S.sc)+opp(210,58);
  loop=requestAnimationFrame(stkL)}
 
 /* ---------- memory ---------- */
 let M;
 const SV={'▲':'<polygon points="12,4 22,20 2,20"/>','●':'<circle cx="12" cy="12" r="9"/>','■':'<rect x="4" y="4" width="16" height="16"/>','◆':'<polygon points="12,2 22,12 12,22 2,12"/>','✚':'<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/>','✕':'<path d="M5 5L19 19M19 5L5 19" stroke="currentColor" stroke-width="4" fill="none"/>','▼':'<polygon points="12,20 22,4 2,4"/>','★':'<polygon points="12,2 14.9,8.9 22,9.3 16.5,14 18.2,21 12,17.3 5.8,21 7.5,14 2,9.3 9.1,8.9"/>'};
 const shp=k=>`<svg viewBox="0 0 24 24" width="52%" height="52%" fill="currentColor">${SV[k]}</svg>`;
-function startMem(){show('mem');const em=['▲','●','■','◆','✚','✕','▼','★'],c=[...em,...em].sort(()=>Math.random()-.5);
- M={c,open:[],lock:false,moves:0,found:0,t0:0};$('#mmsg').textContent='';$('#mhud').textContent='Moves 0';
- const gr=$('#mg');gr.innerHTML='';c.forEach((s,i)=>{const b=document.createElement('button');b.className='card';b.setAttribute('aria-label','Hidden card');b.textContent='?';b.onclick=()=>flip(i,b);gr.append(b)})}
-function flip(i,b){if(M.lock||b.classList.contains('up')||b.classList.contains('done'))return;if(!M.t0)M.t0=Date.now();
- b.classList.add('up');b.innerHTML=shp(M.c[i]);M.open.push([i,b]);if(M.open.length<2)return;
- M.moves++;$('#mhud').textContent='Moves '+M.moves;const[[i1,b1],[i2,b2]]=M.open;M.open=[];
- if(M.c[i1]===M.c[i2]){[b1,b2].forEach(x=>{x.classList.replace('up','done')});if(++M.found===8){const best=Math.min(M.moves,+ld('arc_m',99));sv('arc_m',best);$('#mmsg').textContent=`Cleared in ${M.moves} moves and ${Math.round((Date.now()-M.t0)/1e3)}s. Best: ${best} moves.`}}
- else{M.lock=true;setTimeout(()=>{[b1,b2].forEach(x=>{x.classList.remove('up');x.textContent='?'});M.lock=false},750)}}
+function mhud(){$('#mhud').textContent=NET&&NET.vs?`You ${M.pr[NET.me]} · Opponent ${M.pr[1-NET.me]} · ${M.turn===NET.me?'Your turn':'Their turn'}`:'Moves '+M.moves}
+function startMem(){show('mem');const c=['▲','●','■','◆','✚','✕','▼','★'];c.push(...c);for(let i=15;i>0;i--){const j=RN()*(i+1)|0;[c[i],c[j]]=[c[j],c[i]]}
+ M={c,open:[],lock:false,moves:0,found:0,t0:0,turn:0,pr:[0,0]};$('#mmsg').textContent='';mhud();
+ const gr=$('#mg');gr.innerHTML='';c.forEach((s,i)=>{const b=document.createElement('button');b.className='card';b.setAttribute('aria-label','Hidden card');b.textContent='?';b.onclick=()=>flip(i,b,0);gr.append(b)})}
+function flip(i,b,rem){const v=NET&&NET.vs;if(!b||M.lock||b.classList.contains('up')||b.classList.contains('done'))return;if(v&&!rem&&M.turn!==NET.me)return;if(v&&!rem)send({t:'f',i});
+ if(!M.t0)M.t0=Date.now();b.classList.add('up');b.innerHTML=shp(M.c[i]);M.open.push([i,b]);if(M.open.length<2)return;
+ M.moves++;const[[i1,b1],[i2,b2]]=M.open;M.open=[];
+ if(M.c[i1]===M.c[i2]){[b1,b2].forEach(x=>x.classList.replace('up','done'));M.pr[M.turn]++;mhud();if(++M.found===8)memEnd()}
+ else{M.lock=true;setTimeout(()=>{[b1,b2].forEach(x=>{x.classList.remove('up');x.textContent='?'});M.lock=false;if(v)M.turn^=1;mhud()},750)}}
+function memEnd(){if(NET&&NET.vs){const a=M.pr[NET.me],o=M.pr[1-NET.me];$('#mmsg').textContent=(a>o?'You win! ':a<o?'You lose. ':'Draw. ')+`${a} pairs to ${o}.`;return}
+ const best=Math.min(M.moves,+ld('arc_m',99));sv('arc_m',best);$('#mmsg').textContent=`Cleared in ${M.moves} moves and ${Math.round((Date.now()-M.t0)/1e3)}s. Best: ${best} moves.`}
 
 /* ---------- add to home screen ---------- */
 let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e});
 function inst(){if(dp){dp.prompt();return}$('#it').textContent=/iphone|ipad|ipod/i.test(navigator.userAgent)?'On iPhone or iPad: open this page in Safari, tap the Share button, then choose Add to Home Screen.':'On Android: open the browser menu, then choose Add to Home screen or Install app.'}
 if(!(matchMedia('(display-mode: standalone)').matches||navigator.standalone))$('#inst').hidden=false;
-try{const ico=n=>{const c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d');x.fillStyle='#050505';x.fillRect(0,0,n,n);x.strokeStyle='#e8140c';x.lineWidth=n*.05;x.strokeRect(n*.12,n*.12,n*.76,n*.76);x.fillStyle='#f4f1f1';x.font=`700 ${n*.34}px Sora,system-ui,sans-serif`;x.textAlign='center';x.textBaseline='middle';x.fillText('AG',n/2,n*.53);return c.toDataURL('image/png')};
- $('#ati').href=ico(180);const m={name:'Ability Games',short_name:'Ability',display:'standalone',background_color:'#050505',theme_color:'#050505',start_url:location.href,icons:[{src:ico(192),sizes:'192x192',type:'image/png'},{src:ico(512),sizes:'512x512',type:'image/png'}]};
- $('#mf').href='data:application/manifest+json;charset=utf-8,'+encodeURIComponent(JSON.stringify(m))}catch(e){}
+const LOGO=`<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff0000"/><stop offset="1" stop-color="#8b0000"/></linearGradient><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a2a2a"/><stop offset="1" stop-color="#0a0a0a"/></linearGradient></defs><rect width="500" height="500" rx="90" fill="url(#dg)"/><g transform="translate(0,15)"><polygon points="250,70 400,420 100,420" fill="none" stroke="url(#rg)" stroke-width="26" stroke-linejoin="miter"/><line x1="250" y1="200" x2="250" y2="420" stroke="url(#rg)" stroke-width="16"/><rect x="195" y="300" width="110" height="18" rx="9" fill="#ff0000"/></g></svg>`;
+try{const uri='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(LOGO);$('#fav').href=uri;const im=new Image();
+ im.onload=()=>{const ico=n=>{const c=document.createElement('canvas');c.width=c.height=n;c.getContext('2d').drawImage(im,0,0,n,n);return c.toDataURL('image/png')};
+  $('#ati').href=ico(180);const m={name:'Ability Games',short_name:'Ability',display:'standalone',background_color:'#050505',theme_color:'#050505',start_url:location.href,icons:[{src:ico(192),sizes:'192x192',type:'image/png'},{src:ico(512),sizes:'512x512',type:'image/png'}]};
+  $('#mf').href='data:application/manifest+json;charset=utf-8,'+encodeURIComponent(JSON.stringify(m))};im.src=uri}catch(e){}
 </script></body></html>
