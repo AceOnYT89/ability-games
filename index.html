@@ -78,16 +78,27 @@ input{-webkit-user-select:text;user-select:text}
 <button class="tile" onclick="startAim()"><span class="tg"></span><b>Aim Trainer</b><small>Hit shrinking targets for 30 seconds. Best: <span id="b2">0</span></small></button>
 <button class="tile" onclick="startStack()"><span class="tg"></span><b>Stack</b><small>Tap to drop blocks and build a tall tower. Best: <span id="b3">0</span></small></button>
 <button class="tile" onclick="startBlast()"><span class="tg"></span><b>Ability Blast</b><small>Drag blocks onto the grid and clear full lines. Best: <span id="b4">0</span></small></button>
+<button class="tile" onclick="show('rmenu')"><span class="tg"></span><b>Tap Rush</b><small>Tap the falling tiles, endless or to the beat of your own song. Best: <span id="b5">0</span></small></button>
+<button class="tile" onclick="startFlap()"><span class="tg"></span><b>Flap</b><small>Tap to fly through the gaps. Best: <span id="b6">0</span></small></button>
 </div>
 <div id="inst" hidden style="margin-top:22px"><button class="b alt" onclick="inst()">Add to home screen</button><p id="it" class="sub" style="margin:10px 0 0"></p></div></section>
 
 <section id="lobby" class="scr" hidden>
 <div class="bar"><button class="b alt" onclick="show('menu')">← Menu</button><h2 style="margin:0">Play online</h2></div>
-<div class="panel"><p class="sub" style="margin:0">One of you creates a room and shares the code, the other joins with it. You both play the same game at the same time and the higher score wins. Memory Match is turn based.</p>
-<div class="row"><button class="b" onclick="netHost()">Create room</button><input id="rc" maxlength="6" placeholder="Room code" aria-label="Room code"><button class="b alt" onclick="netJoin($('#rc').value)">Join room</button></div>
+<div class="panel"><p class="sub" style="margin:0">The host picks 2, 3 or 4 players, creates a room and shares the code. Everyone else joins with it. You all play the same game at the same time and the highest score wins. Memory Match is turn based.</p>
+<div class="row"><label>Players (host)<select id="np"><option value="2">2 players</option><option value="3">3 players</option><option value="4">4 players</option></select></label><button class="b" onclick="netHost()">Create room</button><input id="rc" maxlength="6" placeholder="Room code" aria-label="Room code"><button class="b alt" onclick="netJoin($('#rc').value)">Join room</button></div>
 <p id="lt" class="sub" style="margin:0"></p>
-<div id="pick" hidden><p class="sub" style="margin:0 0 10px">Pick the game. Wave Dash uses the settings from the Wave menu.</p><div class="row">
-<button class="b alt" onclick="netPick('wave')">Wave Dash</button><button class="b alt" onclick="netPick('breaker')">Brick Breaker</button><button class="b alt" onclick="netPick('snake')">Snake</button><button class="b alt" onclick="netPick('aim')">Aim Trainer</button><button class="b alt" onclick="netPick('stack')">Stack</button><button class="b alt" onclick="netPick('mem')">Memory Match</button><button class="b alt" onclick="netPick('blast')">Ability Blast</button></div></div></div></section>
+<div id="pick" hidden><p class="sub" style="margin:0 0 10px">Pick the game. Wave Dash and Tap Rush use the settings from their menus.</p><div class="row">
+<button class="b alt" onclick="netPick('wave')">Wave Dash</button><button class="b alt" onclick="netPick('breaker')">Brick Breaker</button><button class="b alt" onclick="netPick('snake')">Snake</button><button class="b alt" onclick="netPick('aim')">Aim Trainer</button><button class="b alt" onclick="netPick('stack')">Stack</button><button class="b alt" onclick="netPick('mem')">Memory Match</button><button class="b alt" onclick="netPick('blast')">Ability Blast</button><button class="b alt" onclick="netPick('rush')">Tap Rush</button><button class="b alt" onclick="netPick('flap')">Flap</button></div></div></div></section>
+
+<section id="rmenu" class="scr" hidden>
+<div class="bar"><button class="b alt" onclick="show('menu')">← Menu</button><h2 style="margin:0">Tap Rush</h2></div>
+<div class="panel"><div class="seg" id="rmodes"><button aria-pressed="true" data-m="endless">Endless<small>Tiles fall faster the longer you last</small></button><button aria-pressed="false" data-m="song">Song<small>Tap tiles to the beat of a song</small></button></div>
+<div class="row"><label>Song<select id="rsong"><option value="75">Built-in slow (75 BPM)</option><option value="120" selected>Built-in medium (120 BPM)</option><option value="174">Built-in fast (174 BPM)</option><option value="file">Custom song (upload below)</option></select></label>
+<label>Upload your song<input type="file" id="rfile" accept="audio/*"></label>
+<label>BPM override (optional)<input type="number" id="rbpm" min="50" max="240" step="0.01" placeholder="Auto-detect"></label></div>
+<p class="sub" style="margin:0">In Song mode the BPM is measured from your song and a tile layout is built on the beat. Slow songs get slow tiles and fast songs get fast ones. You have 5 lives: wrong taps and missed tiles cost one.</p>
+<button class="b" onclick="startRush()">Play</button></div></section>
 
 <section id="wmenu" class="scr" hidden>
 <div class="bar"><button class="b alt" onclick="show('menu')">← Menu</button><h2 style="margin:0">Wave Dash</h2></div>
@@ -122,9 +133,9 @@ input{-webkit-user-select:text;user-select:text}
 const $=s=>document.querySelector(s),cv=$('#cv'),g=cv.getContext('2d');
 let actx,src,loop=0,mode='normal',W,S;const K={};
 const sv=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},ld=(k,d)=>{try{return localStorage.getItem(k)||d}catch(e){return d}};
-function refresh(){$('#bs').textContent=ld('arc_s',0);$('#bm').textContent=ld('arc_m','–');$('#b1').textContent=ld('arc_sn',0);$('#b2').textContent=ld('arc_ai',0);$('#b3').textContent=ld('arc_st',0);$('#b4').textContent=ld('arc_bb',0)}refresh();
+function refresh(){$('#bs').textContent=ld('arc_s',0);$('#bm').textContent=ld('arc_m','–');$('#b1').textContent=ld('arc_sn',0);$('#b2').textContent=ld('arc_ai',0);$('#b3').textContent=ld('arc_st',0);$('#b4').textContent=ld('arc_bb',0);$('#b5').textContent=ld('arc_rs',0);$('#b6').textContent=ld('arc_fl',0)}refresh();
 function stopSong(){try{src&&src.stop()}catch(e){}src=null}
-function show(id){cancelAnimationFrame(loop);scrollTo(0,0);$('#sndb').hidden=true;if(id==='menu'||id==='wmenu'||id==='lobby'){RN=Math.random;if(NET)NET.vs=0}cv.style.cursor='';SVG=null;svg.style.display='none';cv.style.display='block';stopSong();document.querySelectorAll('.scr').forEach(e=>e.hidden=e.id!==id);$('#hud1').textContent='';$('#hud2').textContent='';if(id==='menu')refresh()}
+function show(id){cancelAnimationFrame(loop);scrollTo(0,0);$('#sndb').hidden=true;if(id==='menu'||id==='wmenu'||id==='lobby'||id==='rmenu'){RN=Math.random;if(NET)NET.vs=0}cv.style.cursor='';SVG=null;svg.style.display='none';cv.style.display='block';stopSong();document.querySelectorAll('.scr').forEach(e=>e.hidden=e.id!==id);$('#hud1').textContent='';$('#hud2').textContent='';if(id==='menu')refresh()}
 function ov(h,p,btns){const o=$('#ov');if(!h){o.hidden=true;return}o.hidden=false;o.innerHTML=`<h2>${h}</h2><p>${p||''}</p>`;if(btns){const d=document.createElement('div');d.style.cssText='display:flex;gap:10px';btns.forEach(([t,f],i)=>{const b=document.createElement('button');b.className='b'+(i?' alt':'');b.textContent=t;b.onclick=f;d.append(b)});o.append(d)}}
 document.querySelectorAll('#modes button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll('#modes button').forEach(x=>x.setAttribute('aria-pressed',x===b))});
 $('#file').onchange=()=>{if($('#file').files[0])$('#song').value='file'};
@@ -204,7 +215,7 @@ async function playWave(st){
   const vx=Math.min(780,Math.max(300,250+(bpm-60)*3.6))*C.sp*(C.d<=.4?1.15:1);
   const slope=mini?2:1.15,sz=mini?5:8,gap=2*(sz+vx*slope*(mini?.085:.15)*C.d);
   W={buf,bpm,tier,vx,k:slope*vx,gap,slope,mini,size:mini?5:8,clk:$('#clk').value==='1',pts:build(a,vx,slope,gap,buf.duration,C.d<=.4,C.r),off:a.off,att:0,on:false};W.por=mkPortals(W.pts,a.beats,buf.duration,C.p);
-  if(st){W.vs=1;W.ls=0;ov('Waiting for your friend…','Both players are getting ready.');NET.mr=1;send({t:'rdy'});chkGo();return}
+  if(st){W.vs=1;W.ls=0;ov('Waiting for your friend…','Both players are getting ready.');NET.goFn=startWave;NET.mr=1;send({t:'rdy'});chkGo();return}
   startWave();
  }catch(err){ov('Could not read that audio','Try an MP3, WAV, M4A or OGG file.',[['Back',()=>show('wmenu')]])}
 }
@@ -230,50 +241,72 @@ setInterval(fit,200);addEventListener('resize',fit);addEventListener('orientatio
 let NET=null,MQ=null,GEN=0;
 const NOSRV='Could not reach the game server. Check your internet connection and try again.';
 const lobby=t=>{$('#lt').textContent=t};
-const opp=(x=480,y=58)=>NET&&NET.vs?tx(x,y,'Opponent '+NET.ov,'middle'):'';
-function send(m){try{NET&&NET.c&&NET.c.open&&NET.c.send(m)}catch(e){}}
+const PC=['#ff2a1f','#ff8a7a','#b8b8b8'];
+const oth=()=>NET?NET.pl.filter((p,i)=>i!==NET.me&&!p.gone):[];
+const opp=(x=480,y=58)=>{if(!(NET&&NET.vs))return '';const many=oth().length>1;return tx(x,y,NET.pl.map((p,i)=>i===NET.me||p.gone?'':(many?'P'+(i+1):'Opponent')+' '+p.ov).filter(Boolean).join('   '),'middle')};
+function send(m){try{NET&&NET.c.send(m)}catch(e){}}
 const BR=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt','wss://test.mosquitto.org:8081','wss://mqtt.eclipseprojects.io:443/mqtt'],ME=Math.random().toString(36).slice(2,10);
 function mqPub(o){try{if(!MQ)return;const m=Object.assign({f:ME,i:++MQ.n},o),str=JSON.stringify(m);MQ.cls.forEach(c=>{try{c.connected&&c.publish(MQ.T,str)}catch(e){}})}catch(e){}}
 function netClose(){GEN++;if(MQ){mqPub({k:'bye'});clearInterval(MQ.hb);clearInterval(MQ.jt);MQ.cls.forEach(c=>{try{c.end()}catch(e){}})}MQ=null;NET=null;$('#pick').hidden=true}
-function mqStart(code,host){const T='abilitygames/v1/'+code,g=++GEN;
+function mqStart(code,host,max){const T='abilitygames/v1/'+code,g=++GEN;
  if(typeof mqtt==='undefined'){lobby('Online play could not load its connection library. Check your internet connection.');return}
- const mq=MQ={cls:[],T,host,peer:null,last:Date.now(),n:0,seen:new Set(),q:[],ready:0};
+ const mq=MQ={cls:[],T,host,code,max:max||2,ids:host?[ME]:null,hid:null,ls:{},n:0,seen:new Set(),q:[],ready:0};
  BR.forEach(u=>{let cl;try{cl=mqtt.connect(u,{clientId:'ag_'+ME+Math.random().toString(36).slice(2,5),connectTimeout:7000,reconnectPeriod:0,clean:true})}catch(e){return}
   cl.on('error',()=>{});
   cl.on('close',()=>{const k=mq.cls.indexOf(cl);if(k>=0){mq.cls.splice(k,1);if(!mq.cls.length&&MQ===mq)gone()}});
-  cl.on('connect',()=>{if(g!==GEN){try{cl.end(true)}catch(e){}return}cl.subscribe(T,e=>{if(e||g!==GEN)return;mq.cls.push(cl);if(!mq.ready){mq.ready=1;if(host)lobby(`Room code: ${code.toUpperCase()}. Waiting for your friend to join…`);else mqJoin()}})});
+  cl.on('connect',()=>{if(g!==GEN){try{cl.end(true)}catch(e){}return}cl.subscribe(T,e=>{if(e||g!==GEN)return;mq.cls.push(cl);if(!mq.ready){mq.ready=1;if(host)lobby(`Room code: ${code.toUpperCase()} (up to ${mq.max} players). Waiting for friends to join…`);else mqJoin()}})});
   cl.on('message',(_,p)=>{try{mqMsg(JSON.parse(p.toString()))}catch(e){}})});
  lobby('Connecting…');setTimeout(()=>{if(g===GEN&&!mq.ready)lobby(NOSRV)},10000)}
-function mqJoin(){let n=0;mqPub({k:'join'});MQ.jt=setInterval(()=>{if(NET){clearInterval(MQ.jt);return}if(++n>8){clearInterval(MQ.jt);lobby('No room with that code. Check the code and that your friend is still in the room.');return}mqPub({k:'join'})},1500)}
-function mqMsg(m){if(!MQ||m.f===ME)return;if(m.i!=null){const k=m.f+':'+m.i;if(MQ.seen.has(k))return;MQ.seen.add(k);MQ.q.push(k);if(MQ.q.length>800)MQ.seen.delete(MQ.q.shift())}
- if(MQ.host&&m.k==='join'){if(!MQ.peer||MQ.peer===m.f){MQ.peer=m.f;mqPub({k:'welcome',to:m.f});if(!NET)linked()}else mqPub({k:'full',to:m.f})}
- else if(!MQ.host&&m.to===ME){if(m.k==='welcome'){MQ.peer=m.f;if(!NET)linked()}else if(m.k==='full'){clearInterval(MQ.jt);lobby('That room is full.')}}
- else if(m.f===MQ.peer){MQ.last=Date.now();if(m.k==='d')onNet(m.d);else if(m.k==='bye')gone()}}
-function linked(){const host=MQ.host;MQ.last=Date.now();NET={c:{open:true,send:d=>mqPub({k:'d',d}),close(){}},host,me:host?0:1,vs:0,ov:0,up:1};
- lobby(host?'Friend connected. Pick a game.':'Connected. Waiting for the host to pick a game.');$('#pick').hidden=!host;
- MQ.hb=setInterval(()=>{mqPub({k:'p'});if(NET&&Date.now()-MQ.last>9000)gone()},2000)}
-function gone(){if(!NET)return;clearInterval(MQ.hb);if(MQ)MQ.peer=null;NET=null;lobby('Your friend left the room.');$('#pick').hidden=true;cancelAnimationFrame(loop);stopSong();if(!$('#game').hidden)ov('Your friend left','The room has closed.',[['Back',()=>show('lobby')]]);else if(!$('#mem').hidden)show('lobby')}
-function netHost(){netClose();lobby('Creating room…');mqStart(Math.random().toString(36).slice(2,6),1)}
+function mqJoin(){let n=0;mqPub({k:'join'});MQ.jt=setInterval(()=>{if(NET){clearInterval(MQ.jt);return}if(++n>8){clearInterval(MQ.jt);lobby('No room with that code. Check the code and that the host is still in the room.');return}mqPub({k:'join'})},1500)}
+function mqMsg(m){if(!MQ||m.f===ME)return;
+ if(m.i!=null){const k=m.f+':'+m.i;if(MQ.seen.has(k))return;MQ.seen.add(k);MQ.q.push(k);if(MQ.q.length>1200)MQ.seen.delete(MQ.q.shift())}
+ MQ.ls[m.f]=Date.now();
+ if(MQ.host){
+  if(m.k==='join'){const ids=MQ.ids;let i=ids.indexOf(m.f);
+   if(i<0){if(NET&&NET.vs){mqPub({k:'full',to:m.f,why:'A game is already in progress.'});return}
+    i=ids.indexOf(null);if(i<1)i=ids.length<MQ.max?ids.length:-1;
+    if(i<0){mqPub({k:'full',to:m.f});return}ids[i]=m.f}
+   mqPub({k:'roster',ids});setRoster(ids)}
+  else{const i=MQ.ids.indexOf(m.f);if(i>0){if(m.k==='d')onNet(m.d,i);else if(m.k==='bye')dropP(i)}}}
+ else{
+  if(m.k==='full'&&m.to===ME){clearInterval(MQ.jt);lobby(m.why||'That room is full.')}
+  else if((m.k==='roster'||m.k==='p')&&m.ids){MQ.hid=m.f;if(m.ids.includes(ME)&&!(NET&&JSON.stringify(NET.pl.map(p=>p.id))===JSON.stringify(m.ids)))setRoster(m.ids)}
+  else if(NET&&MQ.hid){const i=NET.pl.findIndex(p=>p.id===m.f);if(i>=0){if(m.k==='d')onNet(m.d,i);else if(m.k==='bye'&&i===0)gone()}}}}
+function setRoster(ids){if(!NET){NET={c:{send:d=>mqPub({k:'d',d})},host:MQ.host,vs:0,up:1,pl:[],mr:0,goFn:null,me:0,myv:null};MQ.hb=setInterval(hb,2000)}
+ NET.pl=ids.map((id,i)=>{const p=NET.pl[i]||{ov:0,o:null,fin:null,rdy:0};p.id=id;p.gone=!id;return p});NET.me=ids.indexOf(ME);
+ if(NET.vs){if(!oth().length){allLeft();return}if(typeof M!=='undefined'&&M&&!$('#mem').hidden&&NET.pl[M.turn]&&NET.pl[M.turn].gone){mnext();mhud()}if(NET.myv!=null)vsRes()}
+ uiLobby()}
+function uiLobby(){if(!NET)return;const n=NET.pl.filter(p=>!p.gone).length,c=MQ.code.toUpperCase();
+ lobby(NET.host?`Room ${c}: ${n} of ${MQ.max} players here.${n>=2?' Pick a game to start.':' Waiting for friends to join…'}`:`Joined room ${c} with ${n} players. Waiting for the host to pick a game.`);$('#pick').hidden=!(NET.host&&n>=2)}
+function hb(){if(!MQ||!NET)return;mqPub(MQ.host?{k:'p',ids:MQ.ids}:{k:'p'});const now=Date.now();
+ if(MQ.host)MQ.ids.forEach((id,i)=>{if(i>0&&id&&now-(MQ.ls[id]||0)>9000)dropP(i)});else if(now-(MQ.ls[MQ.hid]||0)>9000)gone()}
+function dropP(i){MQ.ids[i]=null;mqPub({k:'roster',ids:MQ.ids});setRoster(MQ.ids)}
+function allLeft(){cancelAnimationFrame(loop);stopSong();NET.vs=0;if(!$('#game').hidden)ov('Everyone left','The other players left the room.',[['Back',()=>show('lobby')]]);else if(!$('#mem').hidden)show('lobby');uiLobby()}
+function gone(){if(!NET)return;clearInterval(MQ&&MQ.hb);NET=null;lobby('The room closed.');$('#pick').hidden=true;cancelAnimationFrame(loop);stopSong();if(!$('#game').hidden)ov('The room closed','The host or everyone left.',[['Back',()=>show('lobby')]]);else if(!$('#mem').hidden)show('lobby')}
+function netHost(){netClose();lobby('Creating room…');mqStart(Math.random().toString(36).slice(2,6),1,+$('#np').value||2)}
 function netJoin(code){code=(code||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');if(!code){lobby('Enter a room code first.');return}netClose();lobby('Connecting…');mqStart(code,0)}
-const GM=['wave','breaker','snake','aim','stack','mem','blast'];
-function netPick(g){if(!NET||!NET.up)return;const sd=(Math.random()*1e9|0)+1,st=g==='wave'?{m:mode,s:$('#song').value,b:parseFloat($('#bpm').value)||0,d:+$('#diff').value,sp:+$('#spd').value,r:+$('#rnd').value,p:+$('#por').value,sd}:null;send({t:'start',g,sd,st});vsStart(g,sd,st)}
-function vsStart(g,sd,st){if(!NET||!GM.includes(g))return;NET.vs=1;NET.ov=0;NET.o=null;NET.mr=NET.or=0;NET.myv=null;NET.ofin=null;RN=mul(sd|0);
- ({wave:()=>playWave(st),breaker:startBreaker,snake:startSnake,aim:startAim,stack:startStack,mem:startMem,blast:startBlast})[g]()}
-function onNet(m){if(!NET||!m)return;
- if(m.t==='start')vsStart(m.g,m.sd,m.st);
- else if(m.t==='rdy'){NET.or=1;chkGo()}
- else if(m.t==='go'){if(NET.mr&&W){NET.mr=NET.or=0;startWave()}}
- else if(m.t==='s')NET.ov=+m.v||0;
- else if(m.t==='w'){const p=NET.o,y=+m.y||0,t=+m.tt||0;NET.o={t,y,a:m.a===0?0:1,at:performance.now(),d:p&&y!==p.y?(y>p.y?1:-1):p?p.d:1,tr:(p?p.tr:[]).concat([{t,y}]).filter(q=>q.t>t-.5)}}
- else if(m.t==='e'){NET.ofin=+m.v||0;if(NET.myv!=null)vsRes()}
- else if(m.t==='f'&&NET.vs&&typeof M!=='undefined'&&M)flip(m.i|0,$('#mg').children[m.i|0],1)}
+const GM=['wave','breaker','snake','aim','stack','mem','blast','rush','flap'];
+function netPick(g){if(!NET||!NET.up||!NET.host)return;const sd=(Math.random()*1e9|0)+1,st=g==='wave'?{m:mode,s:$('#song').value,b:parseFloat($('#bpm').value)||0,d:+$('#diff').value,sp:+$('#spd').value,r:+$('#rnd').value,p:+$('#por').value,sd}:g==='rush'?{md:rmode,s:$('#rsong').value,b:parseFloat($('#rbpm').value)||0,sd}:null;send({t:'start',g,sd,st});vsStart(g,sd,st)}
+function vsStart(g,sd,st){if(!NET||!GM.includes(g))return;NET.vs=1;NET.mr=0;NET.myv=null;NET.pl.forEach(q=>{q.ov=0;q.o=null;q.fin=null;q.rdy=0});RN=mul(sd|0);
+ ({wave:()=>playWave(st),breaker:startBreaker,snake:startSnake,aim:startAim,stack:startStack,mem:startMem,blast:startBlast,rush:()=>startRush(st),flap:startFlap})[g]()}
+function onNet(m,from){if(!NET||!m)return;const p=NET.pl[from];if(!p)return;
+ if(m.t==='start'){if(from===0)vsStart(m.g,m.sd,m.st)}
+ else if(m.t==='rdy'){p.rdy=1;chkGo()}
+ else if(m.t==='go'){if(from===0&&NET.mr){NET.mr=0;NET.goFn&&NET.goFn()}}
+ else if(m.t==='s')p.ov=+m.v||0;
+ else if(m.t==='w'){const q=p.o,y=+m.y||0,t=+m.tt||0;p.o={t,y,a:m.a===0?0:1,at:performance.now(),d:q&&y!==q.y?(y>q.y?1:-1):q?q.d:1,tr:(q?q.tr:[]).concat([{t,y}]).filter(z=>z.t>t-.5)}}
+ else if(m.t==='e'){p.fin=+m.v||0;if(NET.myv!=null)vsRes()}
+ else if(m.t==='f'&&NET.vs&&typeof M!=='undefined'&&M&&from===M.turn)flip(m.i|0,$('#mg').children[m.i|0],1)}
 function vsEnd(v,title,fmt){NET.myv=v;NET.title=title;NET.fmt=fmt||(x=>x);send({t:'e',v});vsRes()}
-function vsRes(){if(!NET||!NET.vs)return;const fm=NET.fmt;
- if(NET.ofin==null){ov('Waiting for your opponent…',`${NET.title}: ${fm(NET.myv)}`,[['Leave room',()=>{netClose();show('lobby')}]]);return}
- const m=NET.myv,o=NET.ofin;ov(m>o?'You win':m<o?'You lose':'Draw',`You ${fm(m)} · Opponent ${fm(o)}`,[['Back to lobby',()=>show('lobby')],['Leave room',()=>{netClose();show('lobby')}]])}
-function chkGo(){if(NET&&NET.mr&&NET.or&&NET.host){send({t:'go'});NET.mr=NET.or=0;startWave()}}
+function vsRes(){if(!NET||!NET.vs)return;const fm=NET.fmt,leave=()=>{netClose();show('lobby')};
+ if(oth().some(p=>p.fin==null)){ov('Waiting for the other players…',`${NET.title}: ${fm(NET.myv)}`,[['Leave room',leave]]);return}
+ const all=NET.pl.map((p,i)=>({i,v:i===NET.me?NET.myv:p.fin})).filter(r=>!NET.pl[r.i].gone&&r.v!=null).sort((a,b)=>b.v-a.v),pos=all.filter(r=>r.v>NET.myv).length+1,tie=all.filter(r=>r.v===NET.myv).length>1;
+ const head=all.length===2?(tie?'Draw':pos===1?'You win':'You lose'):(tie&&pos===1?'Tie for 1st':'You finished '+['1st','2nd','3rd','4th'][pos-1]);
+ ov(head,all.map(r=>`${r.i===NET.me?'You':'P'+(r.i+1)} ${fm(r.v)}`).join(' · '),[['Back to lobby',()=>show('lobby')],['Leave room',leave]])}
+function chkGo(){if(NET&&NET.mr&&NET.host&&NET.pl.every((q,i)=>i===NET.me||q.gone||q.rdy)){send({t:'go'});NET.mr=0;NET.pl.forEach(q=>q.rdy=0);NET.goFn&&NET.goFn()}}
 function wEnd(t,fin){W.on=false;W.dead=!fin;stopSong();draw(t);const p=fin?W.buf.duration:Math.max(0,t);send({t:'w',tt:p,y:0,a:0});vsEnd(p,fin?'Level complete':'Crashed',v=>Math.round(v/W.buf.duration*100)+'%')}
 setInterval(()=>{if(NET&&NET.vs&&NET.myv==null&&!$('#game').hidden&&S&&!W)send({t:'s',v:S.sc!=null?S.sc:S.hits})},250);
+
 function cAt(t){const p=W.pts;let i=W.idx;while(i<p.length-2&&p[i+1].t<t)i++;W.idx=i;const a=p[i],b=p[i+1];return a.y+(b.y-a.y)*Math.min(1,Math.max(0,(t-a.t)/((b.t-a.t)||1)))}
 function wframe(){
  const now=actx.currentTime,t=now-W.t0,dt=Math.min(.05,now-W.last);W.last=now;if(W.vs&&now-W.ls>.07){W.ls=now;send({t:'w',tt:+t.toFixed(2),y:Math.round(W.py)})}
@@ -293,8 +326,8 @@ function draw(t){
  for(const p of W.por){const x=X+(p.t-t)*vx;if(x<-30||x>990)continue;o+=`<ellipse cx="${x.toFixed(1)}" cy="${p.y.toFixed(1)}" rx="12" ry="${gp+34}" fill="${p.to<0?'rgba(255,255,255,.12)':'rgba(255,42,31,.15)'}" stroke="${p.to<0?'#fff':'#ff2a1f'}" stroke-width="4"/>`}
  if(W.por.length)o+=tx(944,30,W.grav<0?'Gravity: inverted':'Gravity: normal','end');
  const s=W.size*1.6;
- if(W.vs&&NET&&NET.o&&NET.o.a){const q=NET.o,el=Math.min(.1,(performance.now()-q.at)/1e3),gx=X+(q.t+el-t)*vx,gy=q.y+q.d*W.k*el;
-  o+=`<polyline points="${q.tr.map(p=>`${(X+(p.t-t)*vx).toFixed(1)},${p.y}`).concat(`${gx.toFixed(1)},${gy.toFixed(1)}`).join(' ')}" fill="none" stroke="rgba(255,42,31,.7)" stroke-width="${W.size*.9}"/>`+sh(gx,gy,Math.atan2(q.d*W.k,vx),s,'#ff2a1f','stroke="#fff" stroke-width="2"')+`<text x="${gx.toFixed(1)}" y="${(gy-s-8).toFixed(1)}" fill="#fff" font-family="Sora,system-ui,sans-serif" font-size="12" font-weight="700" text-anchor="middle">Opponent</text>`}
+ if(W.vs&&NET)NET.pl.forEach((pq,pi)=>{const q=pq.o;if(pi===NET.me||pq.gone||!q||!q.a)return;const col=PC[(pi>NET.me?pi-1:pi)%3],el=Math.min(.1,(performance.now()-q.at)/1e3),gx=X+(q.t+el-t)*vx,gy=q.y+q.d*W.k*el,nm=oth().length>1?'P'+(pi+1):'Opponent';
+  o+=`<polyline points="${q.tr.map(p=>`${(X+(p.t-t)*vx).toFixed(1)},${p.y}`).concat(`${gx.toFixed(1)},${gy.toFixed(1)}`).join(' ')}" fill="none" stroke="${col}" stroke-opacity=".7" stroke-width="${W.size*.9}"/>`+sh(gx,gy,Math.atan2(q.d*W.k,vx),s,col,'stroke="#fff" stroke-width="2"')+`<text x="${gx.toFixed(1)}" y="${(gy-s-8).toFixed(1)}" fill="#fff" font-family="Sora,system-ui,sans-serif" font-size="12" font-weight="700" text-anchor="middle">${nm}</text>`})
  o+=`<polyline points="${W.trail.map(p=>`${(X-(t-p.t)*vx).toFixed(1)},${p.y.toFixed(1)}`).concat(`${X},${W.py.toFixed(1)}`).join(' ')}" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="${W.size*.9}"/>`+sh(X,W.py,W.dead?0:Math.atan2((W.hold?-1:1)*W.grav*W.k,vx),s,W.dead?'#f55':'#fff');
  o+=rc(0,H-6,960,6,'rgba(255,255,255,.18)')+rc(0,H-6,960*Math.max(0,Math.min(1,t/W.buf.duration)),6,'#ff2a1f');
  if(t<2)o+=tx(480,60,t<0?'Get ready':'Hold to rise, release to fall','middle');
@@ -390,12 +423,18 @@ function bdrop(){if(S.dr==null)return;const p=S.pc[S.dr],[r,c]=bpos();
   if(!S.pc.some(q=>q&&I.some(y=>I.some(x=>bcan(q.s,y,x))))){S.over=true;bp('over');fin('arc_bb',S.sc,startBlast,'No more moves')}}
  S.dr=null}
 addEventListener('pointerup',()=>{if(S&&S.blast&&!S.over)bdrop()});
-let BSND=ld('arc_bs','0')==='1';
-function bp(kind,n){if(!BSND)return;try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();actx.resume();const c=actx.currentTime;
- const t=(f,d,ty,v,at,f2)=>{const o=actx.createOscillator(),g=actx.createGain();o.type=ty;o.frequency.setValueAtTime(f,c+at);if(f2)o.frequency.exponentialRampToValueAtTime(f2,c+at+d);g.gain.setValueAtTime(v,c+at);g.gain.exponentialRampToValueAtTime(.001,c+at+d);o.connect(g);g.connect(actx.destination);o.start(c+at);o.stop(c+at+d+.02)};
- if(kind==='pick')t(660,.06,'sine',.08,0);else if(kind==='place')t(240,.09,'triangle',.25,0,110);
- else if(kind==='clear')for(let i=0;i<Math.min(n,4)+2;i++)t(523*Math.pow(1.26,i),.18,'sine',.12,.05+i*.07);else if(kind==='over')t(220,.5,'sawtooth',.1,0,70)}catch(e){}}
-function bsnd(){BSND=!BSND;sv('arc_bs',BSND?'1':'0');$('#sndb').textContent='Sound: '+(BSND?'On':'Off');if(BSND)bp('place')}
+let BSND=ld('arc_bs','0')==='1',AU=null;
+function unlockAudio(){try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();if(actx.state!=='running')actx.resume();
+ if(!actx.u){actx.u=1;const o=actx.createBufferSource();o.buffer=actx.createBuffer(1,1,22050);o.connect(actx.destination);o.start(0)}
+ if(BSND&&!AU){const n=800,bf=new ArrayBuffer(44+n*2),d=new DataView(bf),w=(o,t)=>[...t].forEach((c,i)=>d.setUint8(o+i,c.charCodeAt(0)));w(0,'RIFF');d.setUint32(4,36+n*2,true);w(8,'WAVEfmt ');d.setUint32(16,16,true);d.setUint16(20,1,true);d.setUint16(22,1,true);d.setUint32(24,8000,true);d.setUint32(28,16000,true);d.setUint16(32,2,true);d.setUint16(34,16,true);w(36,'data');d.setUint32(40,n*2,true);AU=new Audio(URL.createObjectURL(new Blob([bf],{type:'audio/wav'})));AU.loop=true}
+ if(BSND&&AU&&AU.paused)AU.play().catch(()=>{})}catch(e){}}
+['touchend','pointerup','click','keydown'].forEach(e=>addEventListener(e,unlockAudio,{passive:true}));
+function bp(kind,n){if(!BSND)return;try{unlockAudio();const go=()=>{const c=actx.currentTime,
+  t=(f,d,ty,v,at,f2)=>{const o=actx.createOscillator(),g=actx.createGain();o.type=ty;o.frequency.setValueAtTime(f,c+at);if(f2)o.frequency.exponentialRampToValueAtTime(f2,c+at+d);g.gain.setValueAtTime(v,c+at);g.gain.exponentialRampToValueAtTime(.001,c+at+d);o.connect(g);g.connect(actx.destination);o.start(c+at);o.stop(c+at+d+.02)};
+  if(kind==='pick')t(660,.06,'sine',.15,0);else if(kind==='place')t(240,.09,'triangle',.4,0,110);
+  else if(kind==='clear')for(let i=0;i<Math.min(n,4)+2;i++)t(523*Math.pow(1.26,i),.18,'sine',.22,.05+i*.07);else if(kind==='over')t(220,.5,'sawtooth',.18,0,70)};
+ actx.state==='running'?go():actx.resume().then(go)}catch(e){}}
+function bsnd(){BSND=!BSND;sv('arc_bs',BSND?'1':'0');$('#sndb').textContent='Sound: '+(BSND?'On':'Off');if(BSND){unlockAudio();bp('place')}else if(AU)AU.pause()}
 function startBlast(){show('game');W=null;useSvg(480,640);
  S={g:Array(64).fill(0),pc:[],sc:0,dr:null,mx:240,my:300,over:false,blast:1,fx:[],tap(x,y){if(y<510)return;S.mx=x;S.my=y;const i=x<160?0:x<320?1:2;if(S.pc[i]){S.dr=i;bp('pick')}}};
  bnew();ov();$('#sndb').hidden=false;$('#sndb').textContent='Sound: '+(BSND?'On':'Off');$('#hud2').textContent='Drag a block onto the grid. Fill a whole row or column to clear it.';loop=requestAnimationFrame(bl)}
@@ -409,20 +448,88 @@ function bl(){if(S.over)return;let o='<defs><filter id="gl" x="-50%" y="-50%" wi
  if(S.dr!=null){const p=S.pc[S.dr],[h,w]=bdim(p.s),x0=S.mx-w*CS/2,y0=S.my-50-h*CS/2;o+=p.s.map(([a,b])=>rc(x0+b*CS+2,y0+a*CS+2,CS-4,CS-4,p.c,6)).join('')}
  svg.innerHTML=o+tx(16,40,'Score '+S.sc)+tx(464,40,'Best '+Math.max(S.sc,+ld('arc_bb',0)),'end')+opp(240,62);loop=requestAnimationFrame(bl)}
 
+/* ---------- Tap Rush (SVG): endless + song mode ---------- */
+let rmode='endless';
+document.querySelectorAll('#rmodes button').forEach(b=>b.onclick=()=>{rmode=b.dataset.m;document.querySelectorAll('#rmodes button').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+$('#rfile').onchange=()=>{if($('#rfile').files[0]){$('#rsong').value='file';rmode='song';document.querySelectorAll('#rmodes button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.m==='song'))}};
+function rrow(){S.rows.push({y:S.rows.length?S.rows[S.rows.length-1].y-150:500,l:RN()*4|0,done:0})}
+function rl(l){if(S.over)return;const r=S.rows.find(q=>!q.done);if(!r)return;S.go=true;if(r.l===l){r.done=1;S.sc++}else{S.bad=l;S.over=true}}
+function rtiles(a,minGap){const mean=a.str.reduce((x,y)=>x+y,0)/a.str.length,out=[];let last=0,pl=-1;
+ a.beats.forEach((T,i)=>{if(T<2.5||T-last<minGap)return;if(a.str[i]<.5*mean&&i%2)return;let l=RN()*4|0;if(l===pl)l=(l+1+(RN()*3|0))%4;pl=l;out.push({T,l,done:0});last=T});return out}
+async function startRush(st){
+ const C=st||{md:rmode,s:$('#rsong').value,b:parseFloat($('#rbpm').value)||0,sd:0};
+ show('game');W=null;useSvg(400,640);S={over:true};
+ if(C.md!=='song'){
+  S={rows:[],sc:0,go:false,over:false,bad:-1,last:performance.now(),pk:{},tap(x){rl(Math.max(0,Math.min(3,x/100|0)))}};
+  while(!S.rows.length||S.rows[S.rows.length-1].y>-150)rrow();
+  ov();$('#hud2').textContent='Tap each red tile from the bottom up. Tap with both thumbs, or use D F J K.';loop=requestAnimationFrame(rush);return}
+ ov('Analyzing song…','Measuring the BPM and building your tiles');
+ try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();await actx.resume();RN=C.sd?mul(C.sd):Math.random;
+  let buf;if(C.s==='file'){const f=$('#rfile').files[0];if(!f){ov('No file chosen','Pick an audio file in the Tap Rush menu first.',[['Back',()=>show('rmenu')]]);return}buf=await actx.decodeAudioData(await f.arrayBuffer())}else buf=synth(+C.s,40);
+  await new Promise(r=>setTimeout(r,40));const a=analyze(buf,C.b),sp=Math.min(900,Math.max(300,230+(a.bpm-60)*3.4));
+  S={song:1,buf,bpm:a.bpm,tiles:rtiles(a,Math.max(.24,152/sp)),sp,sc:0,combo:0,life:5,over:false,pk:{},bad:-1,badt:0,fl:null,t0:0,tap(x){rl2(Math.max(0,Math.min(3,x/100|0)))}};
+  $('#hud1').textContent=`${a.bpm.toFixed(1)} BPM · ${a.bpm<95?'Slow':a.bpm<135?'Medium':'Fast'} level`;
+  if(NET&&NET.vs){NET.goFn=rgo;NET.mr=1;ov('Waiting for the other players…','Getting everyone ready.');send({t:'rdy'});chkGo();return}
+  rgo()}catch(e){ov('Could not read that audio','Try an MP3, WAV, M4A or OGG file.',[['Back',()=>show('rmenu')]])}}
+function rgo(){S.t0=actx.currentTime+1.5;stopSong();src=actx.createBufferSource();src.buffer=S.buf;src.connect(actx.destination);src.start(S.t0);
+ ov();$('#hud2').textContent='Tap each tile as it reaches the line. Tap with both thumbs, or use D F J K.';loop=requestAnimationFrame(rsong)}
+function rl2(l){if(S.over)return;const t=actx.currentTime-S.t0,r=S.tiles.find(q=>!q.done&&q.T-t<.3);if(!r)return;
+ if(r.l===l){const e=Math.abs(r.T-t);r.done=1;S.combo++;S.sc+=(e<.09?3:e<.18?2:1)*(1+Math.min(4,S.combo/10|0));S.fl={g:e<.09?'Perfect':'Good',at:performance.now()}}
+ else{r.done=2;S.life--;S.combo=0;S.bad=l;S.badt=performance.now()}}
+function rsong(){const t=actx.currentTime-S.t0,hy=520;
+ ['d','f','j','k'].forEach((k,i)=>{const on=K[k]||K[''+(i+1)];if(on&&!S.pk[i])rl2(i);S.pk[i]=on});
+ for(const r of S.tiles)if(!r.done&&t-r.T>.3){r.done=2;S.life--;S.combo=0}
+ const last=S.tiles.length?S.tiles[S.tiles.length-1].T:0,end=S.life<=0||t>Math.max(last+1.2,3);
+ const now=performance.now();
+ svg.innerHTML=rc(0,0,400,640,'#070707')+[1,2,3].map(i=>rc(i*100-1,0,2,640,'#1c1414')).join('')+(now-S.badt<250?rc(S.bad*100,0,100,640,'rgba(255,255,255,.15)'):'')
+  +S.tiles.map(r=>{const y=hy-(r.T-t)*S.sp;return y<-80||y>720?'':rc(r.l*100+4,y-71,92,142,r.done===1?'#3a1210':r.done===2?'#2a2a2a':'#e8140c',8)}).join('')+rc(0,hy-2,400,4,'rgba(255,255,255,.4)')
+  +`<text x="200" y="90" fill="#fff" opacity=".9" font-family="Sora,system-ui,sans-serif" font-size="56" font-weight="700" text-anchor="middle">${S.sc}</text>`
+  +tx(16,32,'Lives '+Math.max(0,S.life))+tx(384,32,'Combo '+S.combo,'end')+(S.fl&&now-S.fl.at<400?tx(200,hy+50,S.fl.g,'middle'):'')+rc(0,634,400*Math.max(0,Math.min(1,t/S.buf.duration)),6,'#ff2a1f')+opp(200,120);
+ if(end){S.over=true;stopSong();ffin()}else loop=requestAnimationFrame(rsong)}
+function ffin(){fin('arc_rsn',S.sc,startRush,S.life<=0?'Out of lives':'Song complete')}
+function rush(now){const dt=Math.min(.033,(now-S.last)/1e3);S.last=now;
+ ['d','f','j','k'].forEach((k,i)=>{const on=K[k]||K[''+(i+1)];if(on&&!S.pk[i])rl(i);S.pk[i]=on});
+ if(S.go&&!S.over){const sp=300+Math.min(520,S.sc*9);S.rows.forEach(r=>r.y+=sp*dt);const low=S.rows.find(q=>!q.done);if(low&&low.y>640)S.over=true;
+  while(S.rows[S.rows.length-1].y>-150)rrow();S.rows=S.rows.filter(r=>r.y<700)}
+ svg.innerHTML=rc(0,0,400,640,'#070707')+[1,2,3].map(i=>rc(i*100-1,0,2,640,'#1c1414')).join('')+S.rows.map(r=>rc(r.l*100+4,r.y+4,92,142,r.done?'#3a1210':'#e8140c',8)).join('')+(S.bad>=0?rc(S.bad*100,0,100,640,'rgba(255,255,255,.18)'):'')
+  +`<text x="200" y="90" fill="#fff" opacity=".9" font-family="Sora,system-ui,sans-serif" font-size="56" font-weight="700" text-anchor="middle">${S.sc}</text>`+(S.go?'':tx(S.rows[0].l*100+50,S.rows[0].y+84,'Tap','middle'))+opp(200,120);
+ if(S.over){fin('arc_rs',S.sc,startRush,S.bad>=0?'Wrong tile':'Missed a tile');return}
+ loop=requestAnimationFrame(rush)}
+/* ---------- Flap (SVG) ---------- */
+function flp(){if(S.over)return;S.go=true;S.vy=-440}
+function startFlap(){show('game');W=null;useSvg(400,600);
+ S={y:300,vy:0,pp:[],sc:0,go:false,ks:0,last:performance.now(),over:false,tap:flp};
+ ov();$('#hud2').textContent='Tap, click or press Space to flap. Fly through the gaps.';loop=requestAnimationFrame(flap)}
+function flap(now){const dt=Math.min(.033,(now-S.last)/1e3);S.last=now;const kd=K[' ']||K.arrowup||K.w;
+ if(kd&&!S.ks){S.ks=1;flp()}if(!kd)S.ks=0;
+ let dead=false;
+ if(S.go){S.vy+=1400*dt;S.y+=S.vy*dt;const sp=170+Math.min(110,S.sc*4);
+  while(!S.pp.length||S.pp[S.pp.length-1].x<420)S.pp.push({x:S.pp.length?S.pp[S.pp.length-1].x+230:520,gy:130+RN()*340,p:0});
+  S.pp.forEach(p=>{p.x-=sp*dt;if(!p.p&&p.x+64<100){p.p=1;S.sc++}if(100+12>p.x&&100-12<p.x+64&&(S.y-12<p.gy-85||S.y+12>p.gy+85))dead=true});
+  S.pp=S.pp.filter(p=>p.x>-90);if(S.y>568||S.y<12)dead=true}
+ else S.y=300+Math.sin(now/300)*8;
+ svg.innerHTML=rc(0,0,400,600,'#070707')+S.pp.map(p=>rc(p.x,-10,64,p.gy-85+10,'#c80f08',6)+rc(p.x-4,p.gy-85-18,72,18,'#e8140c',5)+rc(p.x,p.gy+85,64,600,'#c80f08',6)+rc(p.x-4,p.gy+85,72,18,'#e8140c',5)).join('')+rc(0,580,400,20,'#1a0a0a')
+  +ci(100,S.y,12,'#fff')+ci(104,S.y-3,3,'#070707')+`<polygon points="111,${S.y} 123,${S.y+3} 111,${S.y+6}" fill="#e8140c"/>`
+  +`<text x="200" y="90" fill="#fff" opacity=".9" font-family="Sora,system-ui,sans-serif" font-size="56" font-weight="700" text-anchor="middle">${S.sc}</text>`+(S.go?'':tx(200,380,'Tap to flap','middle'))+opp(200,120);
+ if(dead){S.over=true;fin('arc_fl',S.sc,startFlap,'Crashed');return}
+ loop=requestAnimationFrame(flap)}
+
 /* ---------- memory ---------- */
 let M;
 const SV={'▲':'<polygon points="12,4 22,20 2,20"/>','●':'<circle cx="12" cy="12" r="9"/>','■':'<rect x="4" y="4" width="16" height="16"/>','◆':'<polygon points="12,2 22,12 12,22 2,12"/>','✚':'<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/>','✕':'<path d="M5 5L19 19M19 5L5 19" stroke="currentColor" stroke-width="4" fill="none"/>','▼':'<polygon points="12,20 22,4 2,4"/>','★':'<polygon points="12,2 14.9,8.9 22,9.3 16.5,14 18.2,21 12,17.3 5.8,21 7.5,14 2,9.3 9.1,8.9"/>'};
 const shp=k=>`<svg viewBox="0 0 24 24" width="52%" height="52%" fill="currentColor">${SV[k]}</svg>`;
-function mhud(){$('#mhud').textContent=NET&&NET.vs?`You ${M.pr[NET.me]} · Opponent ${M.pr[1-NET.me]} · ${M.turn===NET.me?'Your turn':'Their turn'}`:'Moves '+M.moves}
+function mhud(){$('#mhud').textContent=NET&&NET.vs?NET.pl.map((p,i)=>p.gone?'':(i===NET.me?'You ':'P'+(i+1)+' ')+M.pr[i]).filter(Boolean).join(' · ')+' · '+(M.turn===NET.me?'Your turn':'P'+(M.turn+1)+' to play'):'Moves '+M.moves}
+function mnext(){const n=NET.pl.length;let k=M.turn;for(let i=0;i<n;i++){k=(k+1)%n;if(!NET.pl[k].gone)break}M.turn=k}
 function startMem(){show('mem');const c=['▲','●','■','◆','✚','✕','▼','★'];c.push(...c);for(let i=15;i>0;i--){const j=RN()*(i+1)|0;[c[i],c[j]]=[c[j],c[i]]}
- M={c,open:[],lock:false,moves:0,found:0,t0:0,turn:0,pr:[0,0]};$('#mmsg').textContent='';mhud();
+ M={c,open:[],lock:false,moves:0,found:0,t0:0,turn:0,pr:Array(NET&&NET.vs?NET.pl.length:2).fill(0)};$('#mmsg').textContent='';mhud();
  const gr=$('#mg');gr.innerHTML='';c.forEach((s,i)=>{const b=document.createElement('button');b.className='card';b.setAttribute('aria-label','Hidden card');b.textContent='?';b.onclick=()=>flip(i,b,0);gr.append(b)})}
 function flip(i,b,rem){const v=NET&&NET.vs;if(!b||M.lock||b.classList.contains('up')||b.classList.contains('done'))return;if(v&&!rem&&M.turn!==NET.me)return;if(v&&!rem)send({t:'f',i});
  if(!M.t0)M.t0=Date.now();b.classList.add('up');b.innerHTML=shp(M.c[i]);M.open.push([i,b]);if(M.open.length<2)return;
  M.moves++;const[[i1,b1],[i2,b2]]=M.open;M.open=[];
  if(M.c[i1]===M.c[i2]){[b1,b2].forEach(x=>x.classList.replace('up','done'));M.pr[M.turn]++;mhud();if(++M.found===8)memEnd()}
- else{M.lock=true;setTimeout(()=>{[b1,b2].forEach(x=>{x.classList.remove('up');x.textContent='?'});M.lock=false;if(v)M.turn^=1;mhud()},750)}}
-function memEnd(){if(NET&&NET.vs){const a=M.pr[NET.me],o=M.pr[1-NET.me];$('#mmsg').textContent=(a>o?'You win! ':a<o?'You lose. ':'Draw. ')+`${a} pairs to ${o}.`;return}
+ else{M.lock=true;setTimeout(()=>{[b1,b2].forEach(x=>{x.classList.remove('up');x.textContent='?'});M.lock=false;if(v)mnext();mhud()},750)}}
+function memEnd(){if(NET&&NET.vs){const r=M.pr.map((v,i)=>({i,v})).filter(x=>!NET.pl[x.i].gone).sort((a,b)=>b.v-a.v),me=M.pr[NET.me],pos=r.filter(x=>x.v>me).length+1,tie=r.filter(x=>x.v===me).length>1;
+  $('#mmsg').textContent=(pos===1?(tie?'Tie for first. ':'You win! '):'You finished '+['1st','2nd','3rd','4th'][pos-1]+'. ')+r.map(x=>`${x.i===NET.me?'You':'P'+(x.i+1)} ${x.v}`).join(' · ');return}
  const best=Math.min(M.moves,+ld('arc_m',99));sv('arc_m',best);$('#mmsg').textContent=`Cleared in ${M.moves} moves and ${Math.round((Date.now()-M.t0)/1e3)}s. Best: ${best} moves.`}
 
 /* ---------- add to home screen ---------- */
