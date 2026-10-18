@@ -233,19 +233,19 @@ const lobby=t=>{$('#lt').textContent=t};
 const opp=(x=480,y=58)=>NET&&NET.vs?tx(x,y,'Opponent '+NET.ov,'middle'):'';
 function send(m){try{NET&&NET.c&&NET.c.open&&NET.c.send(m)}catch(e){}}
 const BR=['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt','wss://test.mosquitto.org:8081','wss://mqtt.eclipseprojects.io:443/mqtt'],ME=Math.random().toString(36).slice(2,10);
-function mqPub(o){try{MQ&&MQ.cl.connected&&MQ.cl.publish(MQ.T,JSON.stringify(Object.assign({f:ME},o)))}catch(e){}}
-function netClose(){GEN++;if(MQ){mqPub({k:'bye'});clearInterval(MQ.hb);clearInterval(MQ.jt);try{MQ.cl.end(true)}catch(e){}}MQ=null;NET=null;$('#pick').hidden=true}
-function mqStart(code,host){let i=0;const T='abilitygames/v1/'+code,g=++GEN;
- const att=()=>{if(g!==GEN)return;if(i>=BR.length){lobby(NOSRV);return}
-  const u=BR[i++];if(typeof mqtt==='undefined'){lobby('Online play could not load its connection library. Check your internet connection.');return}lobby(`Connecting… (attempt ${i} of ${BR.length})`);let cl;try{cl=mqtt.connect(u,{clientId:'ag_'+ME+i,connectTimeout:6000,reconnectPeriod:0,clean:true})}catch(e){att();return}let live=0,dead=0;
-  const fail=()=>{if(live||dead)return;dead=1;try{cl.end(true)}catch(e){}att()};
-  setTimeout(fail,7000);cl.on('error',()=>{});
-  cl.on('close',()=>{if(!live)fail();else if(MQ&&MQ.cl===cl)gone()});
-  cl.on('connect',()=>{if(g!==GEN){dead=1;cl.end(true);return}cl.subscribe(T,e=>{if(e||dead)return fail();live=1;MQ={cl,T,host,peer:null,last:Date.now()};if(host)lobby(`Room code: ${code.toUpperCase()}. Waiting for your friend to join…`);else mqJoin()})});
-  cl.on('message',(_,p)=>{try{mqMsg(JSON.parse(p.toString()))}catch(e){}})};
- att()}
-function mqJoin(){let n=0;mqPub({k:'join'});MQ.jt=setInterval(()=>{if(NET){clearInterval(MQ.jt);return}if(++n>4){clearInterval(MQ.jt);lobby('No room with that code. Check the code and that your friend is still in the room.');return}mqPub({k:'join'})},1500)}
-function mqMsg(m){if(!MQ||m.f===ME)return;
+function mqPub(o){try{if(!MQ)return;const m=Object.assign({f:ME,i:++MQ.n},o),str=JSON.stringify(m);MQ.cls.forEach(c=>{try{c.connected&&c.publish(MQ.T,str)}catch(e){}})}catch(e){}}
+function netClose(){GEN++;if(MQ){mqPub({k:'bye'});clearInterval(MQ.hb);clearInterval(MQ.jt);MQ.cls.forEach(c=>{try{c.end()}catch(e){}})}MQ=null;NET=null;$('#pick').hidden=true}
+function mqStart(code,host){const T='abilitygames/v1/'+code,g=++GEN;
+ if(typeof mqtt==='undefined'){lobby('Online play could not load its connection library. Check your internet connection.');return}
+ const mq=MQ={cls:[],T,host,peer:null,last:Date.now(),n:0,seen:new Set(),q:[],ready:0};
+ BR.forEach(u=>{let cl;try{cl=mqtt.connect(u,{clientId:'ag_'+ME+Math.random().toString(36).slice(2,5),connectTimeout:7000,reconnectPeriod:0,clean:true})}catch(e){return}
+  cl.on('error',()=>{});
+  cl.on('close',()=>{const k=mq.cls.indexOf(cl);if(k>=0){mq.cls.splice(k,1);if(!mq.cls.length&&MQ===mq)gone()}});
+  cl.on('connect',()=>{if(g!==GEN){try{cl.end(true)}catch(e){}return}cl.subscribe(T,e=>{if(e||g!==GEN)return;mq.cls.push(cl);if(!mq.ready){mq.ready=1;if(host)lobby(`Room code: ${code.toUpperCase()}. Waiting for your friend to join…`);else mqJoin()}})});
+  cl.on('message',(_,p)=>{try{mqMsg(JSON.parse(p.toString()))}catch(e){}})});
+ lobby('Connecting…');setTimeout(()=>{if(g===GEN&&!mq.ready)lobby(NOSRV)},10000)}
+function mqJoin(){let n=0;mqPub({k:'join'});MQ.jt=setInterval(()=>{if(NET){clearInterval(MQ.jt);return}if(++n>8){clearInterval(MQ.jt);lobby('No room with that code. Check the code and that your friend is still in the room.');return}mqPub({k:'join'})},1500)}
+function mqMsg(m){if(!MQ||m.f===ME)return;if(m.i!=null){const k=m.f+':'+m.i;if(MQ.seen.has(k))return;MQ.seen.add(k);MQ.q.push(k);if(MQ.q.length>800)MQ.seen.delete(MQ.q.shift())}
  if(MQ.host&&m.k==='join'){if(!MQ.peer||MQ.peer===m.f){MQ.peer=m.f;mqPub({k:'welcome',to:m.f});if(!NET)linked()}else mqPub({k:'full',to:m.f})}
  else if(!MQ.host&&m.to===ME){if(m.k==='welcome'){MQ.peer=m.f;if(!NET)linked()}else if(m.k==='full'){clearInterval(MQ.jt);lobby('That room is full.')}}
  else if(m.f===MQ.peer){MQ.last=Date.now();if(m.k==='d')onNet(m.d);else if(m.k==='bye')gone()}}
