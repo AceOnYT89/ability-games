@@ -138,6 +138,9 @@ main:not(.intro)>.scr{animation:fiIn .35s ease-out both}
 <button class="tile" onclick="startBlast()"><span class="tg"></span><b>Ability Blast</b><small>Drag blocks onto the grid and clear full lines. Best: <span id="b4">0</span></small></button>
 <button class="tile" onclick="show('rmenu')"><span class="tg"></span><b>Tap Rush</b><small>Tap the falling tiles, endless or to the beat of your own song. Best: <span id="b5">0</span></small></button>
 <button class="tile" onclick="startFlap()"><span class="tg"></span><b>Flap</b><small>Tap to fly through the gaps. Best: <span id="b6">0</span></small></button>
+<button class="tile" onclick="startEcho()"><span class="tg"></span><b>Echo</b><small>Repeat the growing pattern of lights. Best: <span id="b7">0</span></small></button>
+<button class="tile" onclick="startSlope()"><span class="tg"></span><b>Slope</b><small>Roll down an endless 3D track and dodge the blocks. Best: <span id="b8">0</span></small></button>
+<button class="tile" onclick="startRally()"><span class="tg"></span><b>Rally</b><small>Pong against a computer that gets faster. Best: <span id="b9">0</span></small></button>
 </div>
 <div id="inst" hidden style="margin-top:22px"><button class="b alt" onclick="inst()">Add to home screen</button><p id="it" class="sub" style="margin:10px 0 0"></p></div></section>
 
@@ -147,7 +150,7 @@ main:not(.intro)>.scr{animation:fiIn .35s ease-out both}
 <div class="row"><label>Players (host)<select id="np"><option value="2">2 players</option><option value="3">3 players</option><option value="4">4 players</option></select></label><button class="b" onclick="netHost()">Create room</button><input id="rc" maxlength="6" placeholder="Room code" aria-label="Room code"><button class="b alt" onclick="netJoin($('#rc').value)">Join room</button></div>
 <p id="lt" class="sub" style="margin:0"></p>
 <div id="pick" hidden><p class="sub" style="margin:0 0 10px">Pick the game. Wave Dash and Tap Rush use the settings from their menus. If you chose a custom song there, it is sent to everyone in the room for you.</p><div class="row">
-<button class="b alt" onclick="netPick('wave')">Wave Dash</button><button class="b alt" onclick="netPick('breaker')">Brick Breaker</button><button class="b alt" onclick="netPick('snake')">Snake</button><button class="b alt" onclick="netPick('aim')">Aim Trainer</button><button class="b alt" onclick="netPick('stack')">Stack</button><button class="b alt" onclick="netPick('mem')">Memory Match</button><button class="b alt" onclick="netPick('blast')">Ability Blast</button><button class="b alt" onclick="netPick('rush')">Tap Rush</button><button class="b alt" onclick="netPick('flap')">Flap</button></div></div></div></section>
+<button class="b alt" onclick="netPick('wave')">Wave Dash</button><button class="b alt" onclick="netPick('breaker')">Brick Breaker</button><button class="b alt" onclick="netPick('snake')">Snake</button><button class="b alt" onclick="netPick('aim')">Aim Trainer</button><button class="b alt" onclick="netPick('stack')">Stack</button><button class="b alt" onclick="netPick('mem')">Memory Match</button><button class="b alt" onclick="netPick('blast')">Ability Blast</button><button class="b alt" onclick="netPick('rush')">Tap Rush</button><button class="b alt" onclick="netPick('flap')">Flap</button><button class="b alt" onclick="netPick('echo')">Echo</button><button class="b alt" onclick="netPick('slope')">Slope</button><button class="b alt" onclick="netPick('rally')">Rally</button></div></div></div></section>
 
 <section id="rmenu" class="scr" hidden>
 <div class="bar"><button class="b alt" onclick="show('menu')">← Menu</button><h2 style="margin:0">Tap Rush</h2></div>
@@ -191,7 +194,7 @@ main:not(.intro)>.scr{animation:fiIn .35s ease-out both}
 const $=s=>document.querySelector(s),cv=$('#cv'),g=cv.getContext('2d');
 let actx,src,loop=0,mode='normal',W,S;const K={};
 const sv=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},ld=(k,d)=>{try{return localStorage.getItem(k)||d}catch(e){return d}};
-function refresh(){$('#bs').textContent=ld('arc_s',0);$('#bm').textContent=ld('arc_m','–');$('#b1').textContent=ld('arc_sn',0);$('#b2').textContent=ld('arc_ai',0);$('#b3').textContent=ld('arc_st',0);$('#b4').textContent=ld('arc_bb',0);$('#b5').textContent=ld('arc_rs',0);$('#b6').textContent=ld('arc_fl',0)}refresh();
+function refresh(){$('#bs').textContent=ld('arc_s',0);$('#bm').textContent=ld('arc_m','–');$('#b1').textContent=ld('arc_sn',0);$('#b2').textContent=ld('arc_ai',0);$('#b3').textContent=ld('arc_st',0);$('#b4').textContent=ld('arc_bb',0);$('#b5').textContent=ld('arc_rs',0);$('#b6').textContent=ld('arc_fl',0);$('#b7').textContent=ld('arc_ec',0);$('#b8').textContent=ld('arc_sl',0);$('#b9').textContent=ld('arc_pg',0)}refresh();
 function stopSong(){try{src&&src.stop()}catch(e){}src=null}
 function show(id){cancelAnimationFrame(loop);scrollTo(0,0);$('#sndb').hidden=true;if(id==='menu'||id==='wmenu'||id==='lobby'||id==='rmenu'){RN=Math.random;if(NET)NET.vs=0}cv.style.cursor='';SVG=null;svg.style.display='none';cv.style.display='block';stopSong();document.querySelectorAll('.scr').forEach(e=>e.hidden=e.id!==id);$('#hud1').textContent='';$('#hud2').textContent='';if(id==='menu')refresh()}
 function ov(h,p,btns){const o=$('#ov');if(!h){o.hidden=true;return}o.hidden=false;o.innerHTML=`<h2>${h}</h2><p>${p||''}</p>`;if(btns){const d=document.createElement('div');d.style.cssText='display:flex;gap:10px';btns.forEach(([t,f],i)=>{const b=document.createElement('button');b.className='b'+(i?' alt':'');b.textContent=t;b.onclick=f;d.append(b)});o.append(d)}}
@@ -343,12 +346,12 @@ function allLeft(){cancelAnimationFrame(loop);stopSong();NET.vs=0;if(!$('#game')
 function gone(){if(!NET)return;clearInterval(MQ&&MQ.hb);NET=null;lobby('The room closed.');$('#pick').hidden=true;cancelAnimationFrame(loop);stopSong();if(!$('#game').hidden)ov('The room closed','The host or everyone left.',[['Back',()=>show('lobby')]]);else if(!$('#mem').hidden)show('lobby')}
 function netHost(){netClose();lobby('Creating room…');mqStart(Math.random().toString(36).slice(2,6),1,+$('#np').value||2)}
 function netJoin(code){code=(code||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');if(!code){lobby('Enter a room code first.');return}netClose();lobby('Connecting…');mqStart(code,0)}
-const GM=['wave','breaker','snake','aim','stack','mem','blast','rush','flap'];
+const GM=['wave','breaker','snake','aim','stack','mem','blast','rush','flap','echo','slope','rally'];
 async function netPick(g){if(!NET||!NET.up||!NET.host||NET.busy)return;const sd=(Math.random()*1e9|0)+1,st=g==='wave'?{m:mode,s:$('#song').value,b:parseFloat($('#bpm').value)||0,d:+$('#diff').value,sp:+$('#spd').value,r:+$('#rnd').value,p:+$('#por').value,sd}:g==='rush'?{md:rmode,s:$('#rsong').value,b:parseFloat($('#rbpm').value)||0,sd}:null;
  if(st&&st.s==='file'){NET.busy=1;const ok=await shareSong(g==='wave'?$('#file'):$('#rfile'));if(NET)NET.busy=0;if(!ok)return;st.s='net'}
  send({t:'start',g,sd,st});vsStart(g,sd,st)}
 function vsStart(g,sd,st){if(!NET||!GM.includes(g))return;NET.vs=1;NET.mr=0;NET.myv=null;NET.pl.forEach(q=>{q.ov=0;q.o=null;q.fin=null;q.rdy=0});RN=mul(sd|0);
- ({wave:()=>playWave(st),breaker:startBreaker,snake:startSnake,aim:startAim,stack:startStack,mem:startMem,blast:startBlast,rush:()=>startRush(st),flap:startFlap})[g]()}
+ ({wave:()=>playWave(st),breaker:startBreaker,snake:startSnake,aim:startAim,stack:startStack,mem:startMem,blast:startBlast,rush:()=>startRush(st),flap:startFlap,echo:startEcho,slope:startSlope,rally:startRally})[g]()}
 function onNet(m,from){if(!NET||!m)return;const p=NET.pl[from];if(!p)return;
  if(m.t==='start'){if(from===0)vsStart(m.g,m.sd,m.st)}
  else if(m.t==='rdy'){p.rdy=1;chkGo()}
@@ -606,6 +609,68 @@ function flap(now){const dt=Math.min(.033,(now-S.last)/1e3);S.last=now;const kd=
   +`<text x="200" y="90" fill="#fff" opacity=".9" font-family="system-ui,-apple-system,Roboto,sans-serif" font-size="56" font-weight="700" text-anchor="middle">${S.sc}</text>`+(S.go?'':tx(200,380,'Tap to flap','middle'))+opp(200,120);
  if(dead){S.over=true;fin('arc_fl',S.sc,startFlap,'Crashed');return}
  loop=requestAnimationFrame(flap)}
+
+/* ---------- Echo (SVG) ---------- */
+const EP=[[20,110],[210,110],[20,310],[210,310]],EC=['#e11d2a','#f5f1f0','#9c1220','#f2606b'];
+function echoNext(){S.seq.push(RN()*4|0);S.ph='show';S.t0=performance.now()+700}
+const epad=(x,y)=>EP.findIndex(p=>x>=p[0]&&x<=p[0]+170&&y>=p[1]&&y<=p[1]+180);
+function echoTap(p){if(S.ph!=='in'||S.over||p<0)return;S.lit=p;S.litt=performance.now()+240;
+ if(p!==S.seq[S.i]){S.over=true;return}if(++S.i===S.seq.length){S.sc=S.seq.length;S.ph='wait';S.t0=performance.now()+800}}
+function startEcho(){show('game');W=null;useSvg(400,560);
+ S={seq:[],ph:'wait',i:0,t0:performance.now()+500,lit:-1,litt:0,sc:0,over:false,pk:{},tap(x,y){echoTap(epad(x,y))}};
+ ov();$('#hud2').textContent='Watch the pattern, then tap the pads in the same order. It grows by one each round.';loop=requestAnimationFrame(echo)}
+function echo(){const now=performance.now();
+ ['1','2','3','4'].forEach((k,i)=>{const on=K[k];if(on&&!S.pk[i])echoTap(i);S.pk[i]=on});
+ if(S.ph==='wait'&&now>=S.t0)echoNext();
+ let fl=-1;if(S.ph==='show'&&now>=S.t0){const k=Math.floor((now-S.t0)/650);if(k>=S.seq.length){S.ph='in';S.i=0}else if((now-S.t0)%650<450)fl=S.seq[k]}
+ if(now<S.litt)fl=S.lit;
+ svg.innerHTML=rc(0,0,400,560,'#0a0a0a')+EP.map((p,i)=>rc(p[0],p[1],170,180,EC[i],18).replace('/>',` opacity="${fl===i?1:.35}"/>`)).join('')
+  +`<text x="200" y="70" fill="#fff" font-family="system-ui,-apple-system,Roboto,sans-serif" font-size="44" font-weight="700" text-anchor="middle">${S.sc}</text>`+tx(200,516,S.ph==='in'?'Your turn':S.ph==='show'?'Watch…':'','middle')+tx(200,544,opp?'':'','middle')+opp(200,98);
+ if(S.over){fin('arc_ec',S.sc,startEcho,'Wrong pad');return}
+ loop=requestAnimationFrame(echo)}
+/* ---------- Slope (3D track drawn as SVG) ---------- */
+const TW=110,SL=70,HOR=190,FOC=320,CAMH=130;
+const sCx=z=>Math.sin(z*.0021+S.p1)*90+Math.sin(z*.0007+S.p2)*120;
+function sSeg(i){if(!(i>=0))return{gap:0,ob:null};while(S.sg.length<=i){const k=S.sg.length;let gap=0,ob=null;if(k>8){if(RN()<Math.min(.16,k*.0005))gap=RN()<.5?-1:1;else if(RN()<Math.min(.42,.1+k*.0012))ob={x:(RN()-.5)*(TW*2-60),w:40+RN()*40}}S.sg.push({gap,ob})}return S.sg[i]}
+addEventListener('pointerup',()=>{if(S&&S.slope)S.mx=200});
+function startSlope(){show('game');W=null;useSvg(400,600);
+ S={slope:1,z:0,x:0,v:260,t:0,sg:[],p1:RN()*6.28,p2:RN()*6.28,sc:0,mx:200,my:0,last:performance.now(),over:false};S.x=sCx(0);
+ ov();$('#hud2').textContent='Hold or move to the left or right of the middle to steer. Dodge the red blocks and stay on the track.';loop=requestAnimationFrame(slope)}
+function slope(now){const dt=Math.min(.05,(now-S.last)/1e3);S.last=now;S.t+=dt;S.v=Math.min(900,260+S.t*9);
+ let st=K.arrowleft||K.a?-1:K.arrowright||K.d?1:(S.mx-200)/160;st=Math.max(-1,Math.min(1,st));
+ S.z+=S.v*dt;S.x+=st*(260+S.v*.25)*dt;S.sc=Math.floor(S.z/20);
+ const cx=sCx(S.z),i=Math.floor(S.z/SL),sg=sSeg(i);let dead=false;
+ if(Math.abs(S.x-cx)>TW)dead=true;else if(sg.gap&&(sg.gap<0?S.x<cx:S.x>cx))dead=true;
+ for(let k=i;k<=i+1;k++){const q=sSeg(k);if(q.ob){const bx=sCx(k*SL)+q.ob.x;if(S.z+12>k*SL&&S.z-12<k*SL+50&&Math.abs(S.x-bx)<q.ob.w/2+14)dead=true}}
+ const camZ=S.z-150,camX=S.x*.8,pr=(X,Y,Z)=>{const c=FOC/Math.max(24,Z-camZ);return[200+(X-camX)*c,HOR+(CAMH-Y)*c]},pt=P=>P.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+ let o='<defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a0a0a"/><stop offset="1" stop-color="#e11d2a" stop-opacity=".3"/></linearGradient></defs>'+rc(0,0,400,600,'#0a0a0a')+rc(0,0,400,HOR,'url(#sk)');
+ const n0=Math.max(0,Math.floor(camZ/SL)),n1=Math.floor((S.z+1400)/SL);
+ for(let k=n1;k>=n0;k--){const q=sSeg(k),z0=k*SL,z1=z0+SL;if(z1-camZ<24)continue;
+  const c0=sCx(z0),c1=sCx(z1),P=[pr(q.gap<0?c0:c0-TW,0,z0),pr(q.gap>0?c0:c0+TW,0,z0),pr(q.gap>0?c1:c1+TW,0,z1),pr(q.gap<0?c1:c1-TW,0,z1)],fog=Math.max(.12,1-(z0-camZ)/1500).toFixed(2);
+  o+=`<polygon points="${pt(P)}" fill="${k%2?'#1e1013':'#2a1317'}" fill-opacity="${fog}" stroke="#e11d2a" stroke-opacity="${(fog*.7).toFixed(2)}" stroke-width="1.5"/>`;
+  if(q.ob&&z0-camZ>=24){const bx=c0+q.ob.x,w=q.ob.w/2,H=46;
+   o+=`<polygon points="${pt([pr(bx-w,H,z0),pr(bx+w,H,z0),pr(bx+w,H,z0+50),pr(bx-w,H,z0+50)])}" fill="#f2606b" fill-opacity="${fog}"/><polygon points="${pt([pr(bx-w,0,z0),pr(bx+w,0,z0),pr(bx+w,H,z0),pr(bx-w,H,z0)])}" fill="#e11d2a" fill-opacity="${fog}" stroke="#0a0a0a" stroke-width="1"/>`}}
+ const bp=pr(S.x,14,S.z),sh=pr(S.x,0,S.z),r=14*FOC/150;
+ o+=`<ellipse cx="${sh[0].toFixed(1)}" cy="${sh[1].toFixed(1)}" rx="${(r*.9).toFixed(1)}" ry="${(r*.3).toFixed(1)}" fill="#000" opacity=".5"/>`+ci(bp[0].toFixed(1),bp[1].toFixed(1),r.toFixed(1),'#f5f1f0');
+ svg.innerHTML=o+tx(16,36,'Score '+S.sc)+opp(290,36);
+ if(dead){S.over=true;fin('arc_sl',S.sc,startSlope,'Crashed');return}
+ loop=requestAnimationFrame(slope)}
+/* ---------- Rally (Pong, SVG) ---------- */
+function rserve(){const a=(RN()-.5)*1.1,sp=Math.min(780,300+S.sc*6);S.bl={x:200,y:300,vx:sp*Math.sin(a),vy:sp*Math.cos(a)}}
+function startRally(){show('game');W=null;useSvg(400,600);
+ S={px:200,ax:200,sc:0,hp:3,mx:200,my:0,last:performance.now(),over:false,wait:.6};rserve();
+ ov();$('#hud2').textContent='Move the mouse or drag to slide your white paddle. Return the ball. Getting one past the red paddle scores 5.';loop=requestAnimationFrame(rally)}
+function rally(now){const dt=Math.min(.05,(now-S.last)/1e3);S.last=now;
+ if(K.arrowleft||K.a)S.mx-=480*dt;if(K.arrowright||K.d)S.mx+=480*dt;S.mx=cl(S.mx,45,355);S.px+=(S.mx-S.px)*Math.min(1,dt*20);
+ if(S.wait>0)S.wait-=dt;else{const b=S.bl,sp=Math.hypot(b.vx,b.vy);b.x+=b.vx*dt;b.y+=b.vy*dt;
+  if(b.x<8){b.x=8;b.vx=Math.abs(b.vx)}if(b.x>392){b.x=392;b.vx=-Math.abs(b.vx)}
+  const as=170+S.sc*5,tg=b.vy<0?b.x:200;S.ax=cl(S.ax+Math.max(-as*dt,Math.min(as*dt,tg-S.ax)),45,355);
+  if(b.vy>0&&b.y>=548&&b.y<=568&&Math.abs(b.x-S.px)<53){const o=cl((b.x-S.px)/45,-1,1),v=Math.min(780,sp*1.03);b.vx=v*Math.sin(o);b.vy=-v*Math.cos(o);b.y=547;S.sc++}
+  if(b.vy<0&&b.y<=52&&b.y>=32&&Math.abs(b.x-S.ax)<53){const o=cl((b.x-S.ax)/45,-1,1);b.vx=sp*Math.sin(o);b.vy=sp*Math.cos(o);b.y=53}
+  if(b.y>620){S.hp--;if(S.hp>0){rserve();S.wait=.8}}else if(b.y<-20){S.sc+=5;rserve();S.wait=.8}}
+ svg.innerHTML=rc(0,0,400,600,'#0a0a0a')+rc(0,299,400,2,'#3a1515')+rc(S.ax-45,36,90,12,'#e11d2a',6)+rc(S.px-45,552,90,12,'#f5f1f0',6)+(S.wait>0&&S.hp>0?'':ci(S.bl.x,S.bl.y,8,'#f5f1f0'))+tx(16,330,'Score '+S.sc)+tx(384,330,'Lives '+Math.max(0,S.hp),'end')+opp(200,270);
+ if(S.hp<=0){S.over=true;fin('arc_pg',S.sc,startRally,'Out of lives');return}
+ loop=requestAnimationFrame(rally)}
 
 /* ---------- memory ---------- */
 let M;
